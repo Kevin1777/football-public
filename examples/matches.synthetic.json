@@ -1,0 +1,11 @@
+{
+  "synthetic": true,
+  "description": "Invented cases covering five settlement outcomes; not predictions or historical performance.",
+  "matches": [
+    {"id": "demo-01", "home": "North FC", "away": "Harbor FC", "direction": "home", "handicap": -0.5, "score": [2, 0], "volume": 750000, "hot_home": -20, "hot_away": 5},
+    {"id": "demo-02", "home": "Cedar FC", "away": "River FC", "direction": "away", "handicap": 0.75, "score": [0, 1], "volume": 620000, "hot_home": 10, "hot_away": -15},
+    {"id": "demo-03", "home": "Hill FC", "away": "Lake FC", "direction": "home", "handicap": 0, "score": [1, 1], "volume": 180000, "hot_home": 0, "hot_away": 0},
+    {"id": "demo-04", "home": "Elm FC", "away": "Coast FC", "direction": "home", "handicap": -0.25, "score": [0, 0], "volume": 300000, "hot_home": 8, "hot_away": 0},
+    {"id": "demo-05", "home": "Park FC", "away": "Stone FC", "direction": "away", "handicap": 0.5, "score": [2, 0], "volume": 20000, "hot_home": 12, "hot_away": 3}
+  ]
+}

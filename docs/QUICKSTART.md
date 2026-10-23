@@ -1,104 +1,71 @@
-# 🚀 快速开始指南
+# Quick start / 快速开始
 
-## 📁 项目结构
+## 1. 不连接外站先体验
 
-```
-football/
-├── app.py                 # Flask 应用入口（控制器）
-├── requirements.txt        # Python 依赖列表
-├── README.md              # 项目说明
-├── parser/                # 解析模块
-│   ├── __init__.py
-│   └── pdf_parser.py      # PDF 解析核心逻辑（在这里实现解析功能）
-├── templates/             # HTML 模板
-│   └── index.html         # 前端页面
-└── uploads/               # 上传文件目录
-```
-
-## ⚡ 快速启动（3步）
-
-### 1. 安装依赖
+Python 3.11 / 3.12，无需安装依赖：
 
 ```bash
-cd football
-pip install -r requirements.txt
+git clone https://github.com/Kevin1777/football-public.git
+cd football-public
+python -m examples.offline_demo
 ```
 
-### 2. 运行应用
+打开 `demo-output/index.html`。`results.json` 同时保存指标、主客评分、信号、过滤原因和结算。输入全为虚构，方向与比分预设；样例不调用完整 Web 应用，也不代表真实预测。
+
+如浏览器不方便打开本地 HTML，可以仅在本机提供静态页面：
 
 ```bash
-python app.py
+python -m http.server 8765 --bind 127.0.0.1 --directory demo-output
 ```
 
-### 3. 访问应用
+访问 `http://127.0.0.1:8765`，按 Ctrl+C 退出。
 
-打开浏览器访问：**http://localhost:5001**
+## 2. 完整应用：Windows
 
-## 📝 下一步：实现解析逻辑
+完整依赖沿用旧项目版本，推荐在全新 Python 3.12 虚拟环境尝试。此安装流程尚未完成完整应用的公开验收。
 
-### 在 `parser/pdf_parser.py` 中实现 `parse_bifa_pdf()` 函数
-
-当前是占位函数：
-
-```python
-def parse_bifa_pdf(pdf_path):
-    # TODO: 在这里实现PDF解析逻辑
-    print(f"正在尝试解析: {pdf_path}")
-    return None
+```powershell
+py -3.12 -m venv .venv
+.\.venv\Scripts\python -m pip install -r requirements.txt
+Copy-Item .env.example .env
+Copy-Item config/config.example.json config.json
+Copy-Item config/wecom_config.example.json config/wecom_config.json
+.\.venv\Scripts\python app.py
 ```
 
-### 示例实现框架
+不需要激活虚拟环境，也不需要修改 PowerShell 执行策略。
 
-```python
-def parse_bifa_pdf(pdf_path):
-    """
-    解析 PDF 文件并提取表格数据
-    
-    Args:
-        pdf_path: PDF 文件路径
-        
-    Returns:
-        pandas.DataFrame: 提取的表格数据
-        或 None/错误信息: 如果解析失败
-    """
-    try:
-        # 使用 pdfplumber 打开 PDF
-        with pdfplumber.open(pdf_path) as pdf:
-            # 提取所有表格
-            all_tables = []
-            for page in pdf.pages:
-                tables = page.extract_tables()
-                all_tables.extend(tables)
-            
-            # 转换为 DataFrame
-            if all_tables:
-                # 合并所有表格或选择第一个
-                df = pd.DataFrame(all_tables[0])
-                return df
-            else:
-                return None
-                
-    except Exception as e:
-        return f"解析失败: {str(e)}"
+## 3. 完整应用：Linux
+
+```bash
+python3.12 -m venv .venv
+.venv/bin/python -m pip install -r requirements.txt
+cp .env.example .env
+cp config/config.example.json config.json
+cp config/wecom_config.example.json config/wecom_config.json
+.venv/bin/python app.py
 ```
 
-## 🎯 工作流程
+浏览器采集需要 Chrome / Chromium 和匹配的 WebDriver。可通过 `CHROME_BINARY`、`CHROMEDRIVER_PATH` 指定已安装程序；某些初始化路径可能尝试下载驱动，需要网络。
 
-1. **用户上传 PDF** → `app.py` 接收文件
-2. **保存到 uploads/** → `app.py` 保存文件
-3. **调用解析函数** → `app.py` 调用 `parse_bifa_pdf()`
-4. **返回结果** → `parser/pdf_parser.py` 返回 DataFrame
-5. **显示表格** → `app.py` 渲染到前端
+## 4. 配置与实际读取位置
 
-## 🔧 开发提示
+| 本地文件 / 设置 | 用途 | 说明 |
+| --- | --- | --- |
+| `.env` | Flask 地址、调度器、通知和 OCR 可选变量 | 从 `.env.example` 复制；默认 `127.0.0.1:5002` |
+| 根目录 `config.json` | 数据源账号 / 密码 | 从 `config/config.example.json` 复制；由 `services/bifaw_client.py` 读取 |
+| `config/wecom_config.json` | 企业微信 Webhook | 从对应样例复制；通知模块也兼容根目录同名文件 |
+| `DISABLE_SCHEDULER=true` | 首次检查时关闭后台调度和部分恢复服务 | 完整应用仍可能初始化本地目录、数据库并清理旧缓存 |
+| `WECOM_WEBHOOK` / `WECOM_ALERT_WEBHOOK` | 通知配置 | 不同入口使用参数、配置文件或环境变量，分别检查相应模块 |
 
-- **解析逻辑**：在 `parser/pdf_parser.py` 中实现
-- **前端样式**：在 `templates/index.html` 中修改
-- **路由处理**：在 `app.py` 中修改
-- **上传文件**：保存在 `uploads/` 目录
+请在项目根目录启动。全新目录中先检查配置和页面，准备好自己的授权数据与通知目标后再启用调度。不要把真实配置提交到 Git。
 
-## 📚 相关文档
+## 5. 验证和排错
 
-- `README.md` - 完整项目说明
-- `requirements.txt` - 依赖列表
+- `python -m pytest` 需要先安装 `requirements-dev.txt`；不需要完整采集依赖。
+- 当前开发依赖与完整应用依赖分开；Python 3.13+ 对旧版 NumPy、Pandas、OCR 等可能没有匹配安装包，完整应用优先使用 3.11 / 3.12。
+- 账号登录、验证码、网站页面结构和真实通知属于在线集成验收，目前不在 CI 范围内。
+- 页面没有完整认证；不要直接暴露到互联网。启动会执行缓存清理，已有数据先备份。
+- 反馈时提供系统、Python 版本、复现步骤和脱敏错误摘要；不要直接上传 Cookie 或完整日志。
 
+See [README.en.md](../README.en.md) for the English overview and setup commands.

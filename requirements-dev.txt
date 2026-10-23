@@ -1,0 +1,4 @@
+# The offline suite does not install browser/OCR/web-service dependencies.
+pytest==9.0.1
+hypothesis==6.148.5
+detect-secrets==1.5.0

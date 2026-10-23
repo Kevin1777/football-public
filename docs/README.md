@@ -1,4 +1,19 @@
-# PDF 解析工具
+# 文档索引
+
+当前公开版本请优先阅读以下文档：
+
+- [项目主页](../README.md) / [English overview](../README.en.md)
+- [快速开始与配置](QUICKSTART.md)
+- [架构与模块边界](ARCHITECTURE.md)
+- [测试与验证范围](TESTING.md)
+- [路线图](ROADMAP.md)
+- [维护记录](../MAINTAINERS.md) / [更新记录](../CHANGELOG.md)
+
+以下为保留的早期开发笔记。历史路径、功能完成声明和性能数字可能已过时，不能视为当前公开版本的已验证结论。
+
+---
+
+# 历史：PDF 解析工具
 
 基于 Flask 的 PDF 解析应用，用于从 PDF 文件中提取表格数据。
 

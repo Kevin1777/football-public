@@ -18,6 +18,9 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from recommendation.feature_extractor import FeatureExtractor, MetricsData, extract_metrics
 
+# Cover ASCII and Chinese names without expensive cold-start Unicode generation.
+NAME_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789中文测试球队联赛 -_"
+
 
 # ============================================================================
 # 测试策略/生成器
@@ -28,9 +31,9 @@ def valid_match_data_strategy(draw):
     """生成有效的比赛JSON数据"""
     return {
         'match_info': {
-            'league': draw(st.text(min_size=1, max_size=20)),
-            'home': draw(st.text(min_size=1, max_size=20)),
-            'away': draw(st.text(min_size=1, max_size=20)),
+            'league': draw(st.text(alphabet=NAME_ALPHABET, min_size=1, max_size=20)),
+            'home': draw(st.text(alphabet=NAME_ALPHABET, min_size=1, max_size=20)),
+            'away': draw(st.text(alphabet=NAME_ALPHABET, min_size=1, max_size=20)),
         },
         'handicap_data': {
             'current_handicap': draw(st.floats(min_value=-3.0, max_value=3.0, allow_nan=False)),
@@ -40,7 +43,7 @@ def valid_match_data_strategy(draw):
             'initial_home_odds': draw(st.floats(min_value=0.5, max_value=2.0, allow_nan=False)),
             'initial_away_odds': draw(st.floats(min_value=0.5, max_value=2.0, allow_nan=False)),
             'handicap_trend': draw(st.sampled_from(['升盘', '降盘', '稳盘', ''])),
-            'current_handicap_text': draw(st.text(max_size=10)),
+            'current_handicap_text': draw(st.text(alphabet=NAME_ALPHABET, max_size=10)),
         },
         'trade_data': {
             'data': [{

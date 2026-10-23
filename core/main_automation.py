@@ -23,7 +23,7 @@ def setup_telegram():
     print("1. 在Telegram中搜索 @BotFather")
     print("2. 发送 /newbot 创建新机器人")
     print("3. 按提示设置机器人名称和用户名")
-    print("4. 获取Bot Token（类似：123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11）")
+    print("4. 获取Bot Token，并仅保存在本地配置中")
     print("\n5. 在Telegram中搜索 @userinfobot")
     print("6. 发送任意消息获取你的Chat ID（纯数字）")
     

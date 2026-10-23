@@ -3,6 +3,7 @@
 !.env.example
 
 .venv/
+.venv-dev/
 venv/
 __pycache__/
 *.py[cod]
@@ -12,6 +13,9 @@ __pycache__/
 
 config/config.json
 config/wecom_config.json
+/config.json
+/wecom_config.json
+telegram_config.json
 cookies.json
 *cookies*.json
 *.db
@@ -32,6 +36,9 @@ debug_html/
 progress/
 captcha*.png
 docs/pdf/PDF/
+demo-output/
+secret-scan.json
+junit.xml
 
 .DS_Store
 Thumbs.db
