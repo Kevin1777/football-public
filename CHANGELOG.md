@@ -18,6 +18,7 @@ First documented public source preview of Football Data Service.
 - Quick-start login configuration destination: the collector reads the root `config.json`.
 - Ignore rules for root credential files and generated demo / check artifacts.
 - Removed a token-shaped placeholder from Telegram setup guidance to keep strict credential scans unambiguous.
+- Enforced UTF-8 for cross-platform scanning and emptied legacy OCR placeholders detected by the Linux checks.
 - Bounded ASCII / Chinese text generation in feature property tests to avoid expensive cold-start Unicode strategy initialization.
 
 ### Verification scope

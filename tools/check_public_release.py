@@ -82,4 +82,8 @@ def main():
 
 
 if __name__ == "__main__":
+    # detect-secrets opens files using the process default encoding. Without
+    # UTF-8 mode, Windows may silently skip Chinese source as "binary".
+    if not sys.flags.utf8_mode:
+        sys.exit(subprocess.call([sys.executable, "-X", "utf8", str(Path(__file__).resolve())], cwd=ROOT))
     sys.exit(main())
