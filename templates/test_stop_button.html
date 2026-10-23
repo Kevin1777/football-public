@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>停止按钮测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .test-section {
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .btn {
+            padding: 10px 20px;
+            margin: 5px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-danger {
+            background: #f44336;
+            color: white;
+        }
+        .btn-primary {
+            background: #2196F3;
+            color: white;
+        }
+        .log {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            margin-top: 10px;
+        }
+        .log-entry {
+            margin: 5px 0;
+        }
+        .log-info { color: #4ec9b0; }
+        .log-success { color: #4CAF50; }
+        .log-warning { color: #dcdcaa; }
+        .log-error { color: #f48771; }
+    </style>
+</head>
+<body>
+    <h1>🔧 停止按钮功能测试</h1>
+    
+    <div class="test-section">
+        <h2>测试 1: 基本按钮点击</h2>
+        <button class="btn btn-danger" onclick="testBasicClick()">⏹️ 测试点击</button>
+        <p id="test1-result">等待点击...</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试 2: 事件委托</h2>
+        <div id="test2-container">
+            <button class="btn btn-danger test-btn" data-task-id="test-123">⏹️ 停止任务 (事件委托)</button>
+        </div>
+        <p id="test2-result">等待点击...</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>测试 3: API 调用</h2>
+        <button class="btn btn-primary" onclick="testAPICall()">🔍 测试获取任务列表</button>
+        <button class="btn btn-danger" onclick="testStopAPI()">⏹️ 测试停止 API</button>
+        <p id="test3-result">等待测试...</p>
+    </div>
+    
+    <div class="test-section">
+        <h2>控制台日志</h2>
+        <div id="console-log" class="log">
+            <div class="log-entry log-info">[INFO] 页面已加载，等待测试...</div>
+        </div>
+    </div>
+
+    <script>
+        // 日志函数
+        function addLog(message, type = 'info') {
+            const logDiv = document.getElementById('console-log');
+            const entry = document.createElement('div');
+            entry.className = `log-entry log-${type}`;
+            const timestamp = new Date().toLocaleTimeString();
+            entry.textContent = `[${timestamp}] [${type.toUpperCase()}] ${message}`;
+            logDiv.appendChild(entry);
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[${type}]`, message);
+        }
+
+        // 测试 1: 基本点击
+        function testBasicClick() {
+            addLog('基本按钮被点击', 'success');
+            document.getElementById('test1-result').textContent = '✅ 点击成功！';
+            document.getElementById('test1-result').style.color = 'green';
+        }
+
+        // 测试 2: 事件委托
+        document.getElementById('test2-container').addEventListener('click', function(e) {
+            if (e.target.classList.contains('test-btn')) {
+                const taskId = e.target.getAttribute('data-task-id');
+                addLog(`事件委托按钮被点击，taskId: ${taskId}`, 'success');
+                document.getElementById('test2-result').textContent = `✅ 点击成功！任务ID: ${taskId}`;
+                document.getElementById('test2-result').style.color = 'green';
+            }
+        });
+
+        // 测试 3: API 调用
+        async function testAPICall() {
+            addLog('开始测试 API 调用...', 'info');
+            try {
+                const resp = await fetch('/api/tasks?limit=5');
+                const data = await resp.json();
+                addLog(`API 调用成功: ${JSON.stringify(data).substring(0, 100)}...`, 'success');
+                document.getElementById('test3-result').textContent = `✅ API 调用成功！任务数: ${data.count || 0}`;
+                document.getElementById('test3-result').style.color = 'green';
+            } catch (error) {
+                addLog(`API 调用失败: ${error}`, 'error');
+                document.getElementById('test3-result').textContent = `❌ API 调用失败: ${error.message}`;
+                document.getElementById('test3-result').style.color = 'red';
+            }
+        }
+
+        async function testStopAPI() {
+            addLog('开始测试停止 API...', 'info');
+            
+            // 首先获取一个运行中的任务
+            try {
+                const listResp = await fetch('/api/tasks?limit=10');
+                const listData = await listResp.json();
+                
+                if (!listData.success || listData.count === 0) {
+                    addLog('没有找到任务', 'warning');
+                    document.getElementById('test3-result').textContent = '⚠️ 没有找到任务';
+                    document.getElementById('test3-result').style.color = 'orange';
+                    return;
+                }
+                
+                // 找到第一个运行中的任务
+                const runningTask = listData.tasks.find(t => t.status === 'running');
+                
+                if (!runningTask) {
+                    addLog('没有找到运行中的任务', 'warning');
+                    document.getElementById('test3-result').textContent = '⚠️ 没有运行中的任务';
+                    document.getElementById('test3-result').style.color = 'orange';
+                    return;
+                }
+                
+                addLog(`找到运行中的任务: ${runningTask.task_id}`, 'info');
+                
+                // 测试停止 API
+                const stopResp = await fetch(`/api/tasks/${runningTask.task_id}/stop`, {
+                    method: 'POST'
+                });
+                const stopData = await stopResp.json();
+                
+                if (stopData.success) {
+                    addLog(`停止 API 调用成功: ${runningTask.task_id}`, 'success');
+                    document.getElementById('test3-result').textContent = `✅ 停止 API 成功！任务: ${runningTask.task_id}`;
+                    document.getElementById('test3-result').style.color = 'green';
+                } else {
+                    addLog(`停止 API 返回失败: ${stopData.message}`, 'error');
+                    document.getElementById('test3-result').textContent = `❌ 停止失败: ${stopData.message}`;
+                    document.getElementById('test3-result').style.color = 'red';
+                }
+                
+            } catch (error) {
+                addLog(`测试停止 API 失败: ${error}`, 'error');
+                document.getElementById('test3-result').textContent = `❌ 测试失败: ${error.message}`;
+                document.getElementById('test3-result').style.color = 'red';
+            }
+        }
+
+        // 页面加载完成
+        addLog('测试页面已加载完成', 'success');
+        addLog('请依次点击测试按钮', 'info');
+    </script>
+</body>
+</html>

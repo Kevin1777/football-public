@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>⚽ 足球数据分析平台</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/backtest.css') }}">
+  </head>
+  <body>
+    <div class="container">
+      <h1>⚽ 足球数据分析平台</h1>
+      <p class="subtitle">
+        集成数据采集、AI推荐引擎、回测分析、PDF解析等功能，<strong
+          >一站式足球数据分析解决方案</strong
+        >
+      </p>
+      <div class="nav-bar">
+        <div class="nav-links">
+          <button id="toggleLoginBox">🔐 展开登录面板</button>
+          <button class="tab-btn active" data-tab="upload">📤 PDF解析</button>
+          <button class="tab-btn" data-tab="backtest">📈 批量回测</button>
+          <button id="showCollectTab">📊 采集控制台</button>
+          <button id="showRecommendationTab">🎯 推荐引擎</button>
+        </div>
+        {% if cookie_status %}
+        <span
+          class="cookie-status {{ 'online' if cookie_status.get('exists') else 'offline' }}"
+        >
+          {{ cookie_status.get('message', '尚未登录采集控制台') }}
+        </span>
+        {% else %}
+        <span class="cookie-status offline">尚未登录采集控制台</span>
+        {% endif %}
+      </div>
+      <div class="login-card" id="loginCard" style="display: none">
+        <h2>快捷登录必发指数网</h2>
+        <div class="login-fields">
+          <button class="btn" id="homeFetchCaptcha">获取验证码</button>
+          <input type="text" id="homeCaptchaInput" placeholder="请输入验证码" />
+          <button class="btn" id="homeSubmitCaptcha" disabled>提交</button>
+        </div>
+        <img id="homeCaptchaImage" src="" alt="验证码图像" />
+        <p style="color: #64748b; font-size: 0.85em; margin-top: 8px">
+          首次登录需要人工输入验证码，成功后会自动复用 cookies。
+        </p>
+      </div>
+      <!-- Tab: PDF上传 -->
+      <div class="tab-content" id="uploadTab" style="display:block;">
+        <div class="tips">
+          <div class="tips-item">
+            <span>①</span> 支持拖拽上传或点击区域选择 PDF
+          </div>
+          <div class="tips-item"><span>②</span> 解析完成后可直接下载 CSV</div>
+          <div class="tips-item">
+            <span>③</span> 建议先在本地验证数据，再同步至服务器
+          </div>
+        </div>
+
+      <form
+        id="uploadForm"
+        method="POST"
+        action="/upload"
+        enctype="multipart/form-data"
+      >
+        <div class="upload-area" id="uploadArea">
+          <p style="font-size: 1.2em; color: #667eea; margin-bottom: 10px">
+            📤 拖拽文件到此处
+          </p>
+          <p style="color: #999; margin-bottom: 20px">或点击下方按钮选择文件</p>
+          <input
+            type="file"
+            name="pdf_file"
+            id="pdfFile"
+            class="file-input"
+            accept=".pdf"
+            required
+          />
+          <button type="button" class="upload-btn" id="chooseFileBtn">
+            选择 PDF 文件
+          </button>
+          <div class="file-name" id="fileName" style="display: none"></div>
+        </div>
+
+        <button type="submit" class="upload-btn" style="width: 100%">
+          🚀 开始解析
+        </button>
+      </form>
+
+      {% if error %}
+      <div class="error"><strong>❌ 错误：</strong> {{ error }}</div>
+      {% endif %} {% if table_html %}
+      <div class="success" id="resultBanner">
+        <strong>✅ 解析成功！</strong> 已从 PDF 中提取数据，可选择下载或直接浏览
+      </div>
+      <div class="result-header" id="resultsSection">
+        <div class="result-info">
+          <h2>文件：{{ file_name }}</h2>
+          <span>共解析出 {{ row_count }} 行 · {{ col_count }} 列</span>
+        </div>
+        <div class="metadata-list" id="metadataList"></div>
+        <button
+          class="download-btn"
+          id="downloadCsv"
+          data-filename="{{ file_name or '解析结果.csv' }}"
+          data-csv="{{ csv_data }}"
+        >
+          📥 下载 CSV
+        </button>
+        {% if report_text %}
+        <button
+          class="download-btn"
+          id="downloadReport"
+          data-filename="{{ file_name|replace('.pdf', '_报告.txt') }}"
+          data-report="{{ report_data }}"
+        >
+          🗂️ 下载 VIS 报告
+        </button>
+        {% endif %}
+      </div>
+      {% if report_text %}
+      <div class="report-container">
+        <pre>{{ report_text }}</pre>
+      </div>
+      {% endif %}
+      <div class="table-container">{{ table_html|safe }}</div>
+      {% endif %}
+      </div>
+      <!-- End Tab: PDF上传 -->
+
+      <!-- Tab: 批量回测 -->
+      <div class="tab-content" id="backtestTab" style="display:none;">
+        <div class="card">
+          <div class="card-title">📊 批量回测 - X1 JSON推荐引擎</div>
+          <div class="alert alert-info">
+            <strong>💡 使用说明：</strong> 选择日期后，系统会读取本地缓存数据并进行批量回测验证
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label class="form-label">开始日期</label>
+              <input type="date" id="backtestDate" class="form-input" />
+            </div>
+          </div>
+          <div class="section-actions">
+            <button class="btn" onclick="startBatchBacktest()" id="backtestBtn">🏁 开始批量回测</button>
+          </div>
+          <div id="backtestProgress" class="hidden">
+            <div class="progress-bar">
+              <div id="backtestProgressBar" class="progress-fill">0%</div>
+            </div>
+          </div>
+          <div id="backtestStats" class="hidden">
+            <div class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-value" id="btStatTotal">0</div>
+                <div class="stat-label">总场次</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="btStatRecommended" style="color: #10b981;">0</div>
+                <div class="stat-label">推荐场次</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="btStatWin" style="color: #10b981;">0</div>
+                <div class="stat-label">✅ 全赢</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="btStatLoss" style="color: #ef4444;">0</div>
+                <div class="stat-label">❌ 全输</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="btStatWinRate" style="color: #667eea;">0%</div>
+                <div class="stat-label">🎯 引擎胜率</div>
+              </div>
+            </div>
+          </div>
+          <div id="backtestLog" class="hidden">
+            <div class="log-container" id="backtestLogContent"></div>
+          </div>
+        </div>
+      </div>
+      <!-- End Tab: 批量回测 -->
+    </div>
+
+    <!-- Data Injection -->
+    <script id="metadata-json" type="application/json">
+      {{ metadata_json|default("[]", true)|safe }}
+    </script>
+
+    <script>
+      const uploadArea = document.getElementById('uploadArea');
+      const fileInput = document.getElementById('pdfFile');
+      const chooseBtn = document.getElementById('chooseFileBtn');
+      const fileName = document.getElementById('fileName');
+      
+      // Parse injected data
+      let metadataJson = [];
+      try {
+        const rawData = document.getElementById('metadata-json').textContent;
+        metadataJson = JSON.parse(rawData);
+      } catch (e) {
+        console.error('Failed to parse metadata JSON:', e);
+      }
+
+      // 点击上传区域选择文件
+      uploadArea.addEventListener('click', (event) => {
+          if (event.target === chooseBtn) {
+              return;
+          }
+          fileInput.click();
+      });
+
+      if (chooseBtn) {
+          chooseBtn.addEventListener('click', (event) => {
+              event.stopPropagation();
+              fileInput.click();
+          });
+      }
+
+      // 展示元数据
+      const metadataList = document.getElementById('metadataList');
+      if (metadataList && Array.isArray(metadataJson)) {
+          metadataJson.forEach(item => {
+              if (!item || !item.title_meta) return;
+              const { league, datetime, home, away } = item.title_meta;
+              if (!league && !datetime && !home && !away) return;
+              const row = document.createElement('div');
+              row.className = 'metadata-row';
+              const dateText = datetime || '日期未知';
+              const leagueText = league || '联赛未知';
+              const homeText = home || '主队未知';
+              const awayText = away || '客队未知';
+              row.textContent = `${dateText} ${leagueText} | ${homeText} | ${awayText}`;
+              metadataList.appendChild(row);
+          });
+      }
+
+      // 显示文件名
+      fileInput.addEventListener('change', (e) => {
+          if (e.target.files.length > 0) {
+              fileName.textContent = '📎 ' + e.target.files[0].name;
+              fileName.style.display = 'block';
+          }
+      });
+
+      // 拖拽上传
+      uploadArea.addEventListener('dragover', (e) => {
+          e.preventDefault();
+          uploadArea.classList.add('dragover');
+      });
+
+      uploadArea.addEventListener('dragleave', () => {
+          uploadArea.classList.remove('dragover');
+      });
+
+      uploadArea.addEventListener('drop', (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove('dragover');
+
+          if (e.dataTransfer.files.length > 0) {
+              fileInput.files = e.dataTransfer.files;
+              fileName.textContent = '📎 ' + e.dataTransfer.files[0].name;
+              fileName.style.display = 'block';
+          }
+      });
+
+      // 下载 CSV
+      const downloadBtn = document.getElementById('downloadCsv');
+      if (downloadBtn) {
+          downloadBtn.addEventListener('click', () => {
+              const base64Data = downloadBtn.getAttribute('data-csv');
+              const fileName = (downloadBtn.getAttribute('data-filename') || '解析结果.csv').replace(/\.pdf$/i, '.csv');
+              if (!base64Data) return;
+
+              const csvContent = atob(base64Data);
+              const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = fileName;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+          });
+      }
+
+      const downloadReportBtn = document.getElementById('downloadReport');
+      if (downloadReportBtn) {
+          downloadReportBtn.addEventListener('click', () => {
+              const base64Data = downloadReportBtn.getAttribute('data-report');
+              const fileName = (downloadReportBtn.getAttribute('data-filename') || 'VIS报告.txt');
+              if (!base64Data) return;
+
+              const reportContent = atob(base64Data);
+              const blob = new Blob([reportContent], { type: 'text/plain;charset=utf-8;' });
+              const url = URL.createObjectURL(blob);
+
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = fileName;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+          });
+      }
+
+      // 自动滚动到结果区域
+      const resultsSection = document.getElementById('resultsSection');
+      if (resultsSection) {
+          resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    </script>
+    <script>
+      document.addEventListener("DOMContentLoaded", () => {
+        const toggleBtn = document.getElementById("toggleLoginBox");
+        const loginCard = document.getElementById("loginCard");
+        const fetchBtn = document.getElementById("homeFetchCaptcha");
+        const submitBtn = document.getElementById("homeSubmitCaptcha");
+        const captchaImage = document.getElementById("homeCaptchaImage");
+        const captchaInput = document.getElementById("homeCaptchaInput");
+        const cookieStatus = document.querySelector(".cookie-status");
+        let sessionId = null;
+
+        function appendTip(text, type = "info") {
+          const tip = document.createElement("div");
+          tip.textContent = text;
+          tip.style.fontSize = "0.85em";
+          tip.style.marginTop = "8px";
+          tip.style.color = type === "error" ? "#b91c1c" : "#475569";
+          loginCard.appendChild(tip);
+          setTimeout(() => tip.remove(), 5000);
+        }
+
+        async function refreshStatus() {
+          try {
+            const resp = await fetch("/api/bifaw/status");
+            const data = await resp.json();
+            if (cookieStatus) {
+              cookieStatus.textContent = data.message || "未知状态";
+              cookieStatus.classList.toggle("online", !!data.exists);
+              cookieStatus.classList.toggle("offline", !data.exists);
+            }
+          } catch (error) {
+            appendTip(`刷新状态失败：${error}`, "error");
+          }
+        }
+
+        toggleBtn.addEventListener("click", () => {
+          const shown = loginCard.style.display !== "none";
+          loginCard.style.display = shown ? "none" : "block";
+          toggleBtn.textContent = shown ? "🔐 展开登录面板" : "🔽 收起登录面板";
+        });
+
+        fetchBtn.addEventListener("click", async () => {
+          fetchBtn.disabled = true;
+          submitBtn.disabled = true;
+          appendTip("正在获取验证码，请稍候…");
+          try {
+            const resp = await fetch("/api/bifaw/captcha", { method: "POST" });
+            const data = await resp.json();
+            if (!data.success) {
+              appendTip(data.message || "获取验证码失败", "error");
+              return;
+            }
+            sessionId = data.session_id;
+            captchaImage.src = `data:image/png;base64,${data.captcha}`;
+            captchaImage.style.display = "block";
+            submitBtn.disabled = false;
+            appendTip("验证码已生成，请识别后输入。");
+          } catch (error) {
+            appendTip(`请求异常：${error}`, "error");
+          } finally {
+            fetchBtn.disabled = false;
+          }
+        });
+
+        submitBtn.addEventListener("click", async () => {
+          const text = captchaInput.value.trim();
+          if (!sessionId) {
+            appendTip("请先获取验证码。", "error");
+            return;
+          }
+          if (!text) {
+            appendTip("验证码不能为空。", "error");
+            return;
+          }
+          submitBtn.disabled = true;
+          appendTip("正在提交验证码…");
+          try {
+            const resp = await fetch("/api/bifaw/login", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ session_id: sessionId, captcha: text }),
+            });
+            const data = await resp.json();
+            if (data.success) {
+              appendTip(data.message || "登录成功。");
+              captchaImage.style.display = "none";
+              captchaInput.value = "";
+              sessionId = null;
+              await refreshStatus();
+            } else {
+              appendTip(data.message || "登录失败。", "error");
+              if (data.captcha) {
+                captchaImage.src = `data:image/png;base64,${data.captcha}`;
+                captchaImage.style.display = "block";
+              }
+            }
+          } catch (error) {
+            appendTip(`提交异常：${error}`, "error");
+          } finally {
+            submitBtn.disabled = false;
+          }
+        });
+
+        refreshStatus();
+      });
+
+      // Tab切换功能
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const targetTab = btn.dataset.tab;
+          
+          // 更新按钮状态
+          document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          
+          // 切换内容
+          document.querySelectorAll('.tab-content').forEach(content => {
+            content.style.display = 'none';
+          });
+          document.getElementById(targetTab + 'Tab').style.display = 'block';
+        });
+      });
+
+      // 设置批量回测默认日期（3天前）
+      const backtestDateInput = document.getElementById('backtestDate');
+      if (backtestDateInput) {
+        const today = new Date();
+        const threeDaysAgo = new Date(today);
+        threeDaysAgo.setDate(today.getDate() - 3);
+        backtestDateInput.value = threeDaysAgo.toISOString().split('T')[0];
+      }
+    </script>
+    <script>
+      // 批量回测功能
+      let backtestResults = [];
+
+      async function startBatchBacktest() {
+        const startDate = document.getElementById('backtestDate').value;
+        
+        if (!startDate) {
+          alert('请选择开始日期！');
+          return;
+        }
+
+        const btn = document.getElementById('backtestBtn');
+        btn.disabled = true;
+        btn.textContent = '⏳ 回测中...';
+
+        document.getElementById('backtestProgress').classList.remove('hidden');
+        document.getElementById('backtestStats').classList.remove('hidden');
+        document.getElementById('backtestLog').classList.remove('hidden');
+        
+        const logContent = document.getElementById('backtestLogContent');
+        logContent.innerHTML = '';
+        addLog('info', '🔍 查询已完场比赛...', 'backtestLogContent');
+
+        try {
+          // 1. 获取比赛列表
+          const listResponse = await fetch(`/api/matches/list?date=${startDate}`);
+          const listData = await listResponse.json();
+          
+          if (!listData.success || !listData.matches || listData.matches.length === 0) {
+            addLog('error', '未找到比赛数据', 'backtestLogContent');
+            btn.disabled = false;
+            btn.textContent = '🏁 开始批量回测';
+            return;
+          }
+
+          const matches = listData.matches;
+          addLog('success', `找到 ${matches.length} 场比赛`, 'backtestLogContent');
+          updateProgress('backtestProgressBar', 10);
+
+          // 2. 调用批量回测API
+          addLog('info', '开始批量回测...', 'backtestLogContent');
+          
+          const backtestResponse = await fetch('/api/backtest/batch', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              matches: matches
+            })
+          });
+
+          const backtestData = await backtestResponse.json();
+          updateProgress('backtestProgressBar', 90);
+
+          if (backtestData.success) {
+            const stats = backtestData.statistics || {};
+            backtestResults = backtestData.results || [];
+            
+            // 更新统计卡片
+            document.getElementById('btStatTotal').textContent = stats.total || 0;
+            document.getElementById('btStatRecommended').textContent = stats.recommended || 0;
+            document.getElementById('btStatWin').textContent = stats.win || 0;
+            document.getElementById('btStatLoss').textContent = stats.lose || 0;
+            
+            const winRate = stats.win_rate || 0;
+            document.getElementById('btStatWinRate').textContent = winRate.toFixed(1) + '%';
+            
+            updateProgress('backtestProgressBar', 100);
+            
+            // 显示详细结果
+            addLog('success', `\n✅ 批量回测完成！`, 'backtestLogContent');
+            addLog('info', ``, 'backtestLogContent');
+            addLog('info', `📊 推荐统计:`, 'backtestLogContent');
+            addLog('info', `   总场次: ${stats.total || 0}`, 'backtestLogContent');
+            addLog('info', `   推荐场次: ${stats.recommended || 0}`, 'backtestLogContent');
+            addLog('info', `   不推荐: ${stats.no_bet || 0}`, 'backtestLogContent');
+            addLog('info', ``, 'backtestLogContent');
+            addLog('info', `📈 推荐结果:`, 'backtestLogContent');
+            addLog('success', `   ✅ 全赢: ${stats.win || 0}`, 'backtestLogContent');
+            addLog('error', `   ❌ 全输: ${stats.lose || 0}`, 'backtestLogContent');
+            addLog('success', `   ✅ 半赢: ${stats.half_win || 0}`, 'backtestLogContent');
+            addLog('error', `   ❌ 半输: ${stats.half_lose || 0}`, 'backtestLogContent');
+            addLog('info', `   ➖ 走水: ${stats.draw || 0}`, 'backtestLogContent');
+            addLog('info', ``, 'backtestLogContent');
+            addLog('info', `🎯 核心指标:`, 'backtestLogContent');
+            addLog('success', `   引擎胜率: ${winRate.toFixed(1)}%`, 'backtestLogContent');
+            addLog('info', `   总盈利: ${(stats.total_profit || 0).toFixed(2)} 单位`, 'backtestLogContent');
+            addLog('info', `   ROI: ${(stats.roi || 0).toFixed(1)}%`, 'backtestLogContent');
+            
+          } else {
+            addLog('error', `回测失败: ${backtestData.message}`, 'backtestLogContent');
+          }
+
+        } catch (error) {
+          addLog('error', `请求失败: ${error.message}`, 'backtestLogContent');
+          console.error('Backtest error:', error);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '🏁 开始批量回测';
+        }
+      }
+
+      function updateProgress(elementId, percentage) {
+        const bar = document.getElementById(elementId);
+        bar.style.width = percentage + '%';
+        bar.textContent = percentage + '%';
+      }
+
+      function addLog(type, message, containerId) {
+        const logContainer = document.getElementById(containerId);
+        const entry = document.createElement('div');
+        entry.className = `log-entry log-${type}`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logContainer.appendChild(entry);
+        logContainer.scrollTop = logContainer.scrollHeight;
+      }
+    </script>
+  </body>
+</html>

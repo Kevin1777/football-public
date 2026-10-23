@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>按钮测试</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .btn { padding: 10px 20px; margin: 10px; cursor: pointer; border: none; border-radius: 4px; }
+        .btn-danger { background: #f44336; color: white; }
+        .log { background: #1e1e1e; color: #d4d4d4; padding: 15px; margin-top: 20px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>按钮功能测试</h1>
+    
+    <h2>测试 1: 内联 onclick</h2>
+    <button class="btn btn-danger" onclick="testClick('inline')">内联 onclick 测试</button>
+    
+    <h2>测试 2: addEventListener</h2>
+    <button class="btn btn-danger" id="testBtn">addEventListener 测试</button>
+    
+    <h2>测试 3: 动态生成的按钮</h2>
+    <div id="dynamicContainer"></div>
+    <button class="btn" onclick="generateButton()">生成动态按钮</button>
+    
+    <h2>测试 4: API 调用</h2>
+    <button class="btn btn-danger" onclick="testAPI()">测试 API 调用</button>
+    
+    <div class="log" id="log"></div>
+
+    <script>
+        function log(message) {
+            const logDiv = document.getElementById('log');
+            const time = new Date().toLocaleTimeString();
+            logDiv.innerHTML += `[${time}] ${message}<br>`;
+            console.log(message);
+        }
+
+        function testClick(source) {
+            log(`✅ 按钮点击成功！来源: ${source}`);
+            alert(`按钮点击成功！来源: ${source}`);
+        }
+
+        // 测试 2
+        document.getElementById('testBtn').addEventListener('click', function() {
+            testClick('addEventListener');
+        });
+
+        // 测试 3
+        function generateButton() {
+            const container = document.getElementById('dynamicContainer');
+            container.innerHTML = `
+                <button class="btn btn-danger" onclick="testClick('dynamic')">
+                    动态生成的按钮
+                </button>
+            `;
+            log('✅ 动态按钮已生成');
+        }
+
+        // 测试 4
+        async function testAPI() {
+            log('📤 开始测试 API...');
+            try {
+                const resp = await fetch('/api/tasks?limit=5');
+                const data = await resp.json();
+                log(`✅ API 调用成功: ${JSON.stringify(data).substring(0, 100)}...`);
+                
+                if (data.success && data.tasks && data.tasks.length > 0) {
+                    const taskId = data.tasks[0].task_id;
+                    log(`📋 找到任务: ${taskId}`);
+                    
+                    // 测试停止 API
+                    log(`📤 测试停止 API: /api/tasks/${taskId}/stop`);
+                    const stopResp = await fetch(`/api/tasks/${taskId}/stop`, {
+                        method: 'POST'
+                    });
+                    const stopData = await stopResp.json();
+                    log(`📥 停止 API 响应: ${JSON.stringify(stopData)}`);
+                } else {
+                    log('⚠️ 没有找到任务');
+                }
+            } catch (error) {
+                log(`❌ API 调用失败: ${error}`);
+            }
+        }
+
+        log('✅ 测试页面已加载');
+    </script>
+</body>
+</html>

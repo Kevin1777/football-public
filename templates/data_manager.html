@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>📊 数据管理/分析 - 必发指数采集系统</title>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        min-height: 100vh;
+        padding: 20px;
+      }
+
+      .container {
+        max-width: 1400px;
+        margin: 0 auto;
+      }
+
+      .header {
+        background: rgba(255, 255, 255, 0.95);
+        padding: 30px;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        margin-bottom: 24px;
+      }
+
+      .header h1 {
+        font-size: 28px;
+        color: #1a202c;
+        margin-bottom: 8px;
+      }
+
+      .header p {
+        color: #718096;
+        font-size: 14px;
+      }
+
+      .stats-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+        gap: 16px;
+        margin-bottom: 24px;
+      }
+
+      .stat-card {
+        background: white;
+        padding: 24px;
+        border-radius: 12px;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+      }
+
+      .stat-card .label {
+        font-size: 13px;
+        color: #718096;
+        margin-bottom: 8px;
+      }
+
+      .stat-card .value {
+        font-size: 28px;
+        font-weight: 700;
+        color: #1a202c;
+      }
+
+      .stat-card .suffix {
+        font-size: 14px;
+        color: #a0aec0;
+        margin-left: 4px;
+      }
+
+      .content-section {
+        background: white;
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+        margin-bottom: 24px;
+      }
+
+      .section-header {
+        padding: 24px 30px;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+      }
+
+      .section-title {
+        font-size: 20px;
+        font-weight: 600;
+      }
+
+      .refresh-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.3);
+        padding: 8px 16px;
+        border-radius: 8px;
+        color: white;
+        cursor: pointer;
+        font-size: 14px;
+        transition: all 0.3s;
+      }
+
+      .refresh-btn:hover {
+        background: rgba(255, 255, 255, 0.3);
+      }
+
+      .table-container {
+        padding: 24px 30px;
+        overflow-x: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+
+      thead th {
+        background: #f7fafc;
+        padding: 16px;
+        text-align: left;
+        font-weight: 600;
+        color: #2d3748;
+        border-bottom: 2px solid #e2e8f0;
+        font-size: 14px;
+      }
+
+      tbody tr {
+        border-bottom: 1px solid #e2e8f0;
+        transition: background 0.2s;
+        cursor: pointer;
+      }
+
+      tbody tr:hover {
+        background: #f7fafc;
+      }
+
+      tbody td {
+        padding: 16px;
+        color: #4a5568;
+        font-size: 14px;
+      }
+
+      .expandable-row {
+        background: #f7fafc !important;
+      }
+
+      .details-container {
+        padding: 24px;
+        background: #edf2f7;
+      }
+
+      .file-list {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+        gap: 12px;
+      }
+
+      .file-item {
+        background: white;
+        padding: 16px;
+        border-radius: 8px;
+        border-left: 4px solid #667eea;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+      }
+
+      .file-name {
+        font-weight: 600;
+        color: #2d3748;
+        margin-bottom: 8px;
+        word-break: break-all;
+      }
+
+      .file-stats {
+        display: flex;
+        gap: 16px;
+        font-size: 13px;
+        color: #718096;
+      }
+
+      .file-stat {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+
+      .badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: 600;
+      }
+
+      .badge-primary {
+        background: #ebf4ff;
+        color: #3182ce;
+      }
+
+      .badge-success {
+        background: #c6f6d5;
+        color: #2f855a;
+      }
+
+      .badge-warning {
+        background: #feebc8;
+        color: #c05621;
+      }
+
+      .loading {
+        text-align: center;
+        padding: 40px;
+        color: #718096;
+      }
+
+      .empty {
+        text-align: center;
+        padding: 60px;
+        color: #a0aec0;
+      }
+
+      .expand-icon {
+        transition: transform 0.3s;
+        display: inline-block;
+      }
+
+      .expand-icon.expanded {
+        transform: rotate(90deg);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <!-- 页面头部 -->
+      <div class="header">
+        <h1>📊 数据管理/分析</h1>
+        <p>查看每天的采集数据统计，点击日期查看详细信息</p>
+      </div>
+
+      <!-- 统计卡片 -->
+      <div class="stats-cards">
+        <div class="stat-card">
+          <div class="label">总天数</div>
+          <div class="value">
+            <span id="totalDays">0</span>
+            <span class="suffix">天</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="label">总文件数</div>
+          <div class="value">
+            <span id="totalFiles">0</span>
+            <span class="suffix">场</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="label">总行数</div>
+          <div class="value">
+            <span id="totalRows">0</span>
+            <span class="suffix">行</span>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="label">总大小</div>
+          <div class="value">
+            <span id="totalSize">0</span>
+            <span class="suffix">MB</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 按日期统计表格 -->
+      <div class="content-section">
+        <div class="section-header">
+          <div class="section-title">📅 按日期统计</div>
+          <button class="refresh-btn" onclick="loadStatistics()">
+            🔄 刷新数据
+          </button>
+        </div>
+        <div class="table-container">
+          <table id="statsTable">
+            <thead>
+              <tr>
+                <th style="width: 40px"></th>
+                <th>日期</th>
+                <th>文件数</th>
+                <th>总行数</th>
+                <th>大小(MB)</th>
+              </tr>
+            </thead>
+            <tbody id="statsTableBody">
+              <tr>
+                <td colspan="5" class="loading">加载中...</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      let expandedDate = null;
+
+      // 加载数据统计
+      async function loadStatistics() {
+        try {
+          const response = await fetch("/api/data/statistics/summary");
+          const result = await response.json();
+
+          if (result.success) {
+            displayStatistics(result.data);
+          } else {
+            showError("加载失败: " + result.message);
+          }
+        } catch (e) {
+          console.error("加载数据统计失败:", e);
+          showError("加载失败: " + e.message);
+        }
+      }
+
+      // 显示统计数据
+      function displayStatistics(data) {
+        // 更新总计卡片
+        const totalDays = data.length;
+        const totalFiles = data.reduce((sum, item) => sum + item.file_count, 0);
+        const totalRows = data.reduce((sum, item) => sum + item.total_rows, 0);
+        const totalSize = data.reduce((sum, item) => sum + item.size_mb, 0);
+
+        document.getElementById("totalDays").textContent = totalDays;
+        document.getElementById("totalFiles").textContent = totalFiles.toLocaleString();
+        document.getElementById("totalRows").textContent = totalRows.toLocaleString();
+        document.getElementById("totalSize").textContent = totalSize.toFixed(2);
+
+        // 更新表格
+        const tbody = document.getElementById("statsTableBody");
+        tbody.innerHTML = "";
+
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="5" class="empty">暂无数据</td></tr>';
+          return;
+        }
+
+        data.forEach((item) => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>
+              <span class="expand-icon" id="icon-${item.date}">▶</span>
+            </td>
+            <td><strong>${item.date}</strong></td>
+            <td><span class="badge badge-primary">${item.file_count}</span></td>
+            <td>${item.total_rows.toLocaleString()}</td>
+            <td>${item.size_mb}</td>
+          `;
+          row.onclick = () => toggleDateDetails(item.date, row);
+          tbody.appendChild(row);
+        });
+      }
+
+      // 切换日期详情
+      async function toggleDateDetails(date, row) {
+        const icon = document.getElementById(`icon-${date}`);
+
+        // 如果已经展开，则收起
+        if (expandedDate === date) {
+          const detailRow = row.nextElementSibling;
+          if (detailRow && detailRow.classList.contains("expandable-row")) {
+            detailRow.remove();
+          }
+          icon.classList.remove("expanded");
+          expandedDate = null;
+          return;
+        }
+
+        // 收起之前展开的行
+        if (expandedDate) {
+          const prevIcon = document.getElementById(`icon-${expandedDate}`);
+          if (prevIcon) {
+            prevIcon.classList.remove("expanded");
+          }
+          const prevRow = document.querySelector(`[data-date="${expandedDate}"]`);
+          if (prevRow) {
+            prevRow.remove();
+          }
+        }
+
+        // 展开当前行
+        icon.classList.add("expanded");
+        expandedDate = date;
+
+        // 加载详情
+        try {
+          const response = await fetch(
+            `/api/data/statistics/date/${date}`
+          );
+          const result = await response.json();
+
+          if (result.success) {
+            showDateDetails(row, result.data);
+          } else {
+            showError("加载详情失败: " + result.message);
+          }
+        } catch (e) {
+          console.error("加载日期详情失败:", e);
+          showError("加载详情失败: " + e.message);
+        }
+      }
+
+      // 显示日期详情
+      function showDateDetails(afterRow, data) {
+        const detailRow = document.createElement("tr");
+        detailRow.classList.add("expandable-row");
+        detailRow.setAttribute("data-date", data.date);
+        detailRow.innerHTML = `
+          <td colspan="5">
+            <div class="details-container">
+              <h3 style="margin-bottom: 16px; color: #2d3748;">
+                📁 ${data.date} 的比赛明细 (共 ${data.file_count} 场)
+              </h3>
+              <div class="file-list" id="fileList-${data.date}">
+                ${
+                  data.files.length === 0
+                    ? '<p style="color: #a0aec0;">暂无数据</p>'
+                    : data.files
+                        .map(
+                          (file) => `
+                  <div class="file-item">
+                    <div class="file-name">${file.match_info.label || file.name}</div>
+                    <div class="file-stats">
+                      <div class="file-stat">📊 ${file.rows} 行</div>
+                      <div class="file-stat">💾 ${(file.size / 1024).toFixed(1)} KB</div>
+                    </div>
+                  </div>
+                `
+                        )
+                        .join("")
+                }
+              </div>
+            </div>
+          </td>
+        `;
+
+        afterRow.insertAdjacentElement("afterend", detailRow);
+      }
+
+      // 显示错误
+      function showError(message) {
+        const tbody = document.getElementById("statsTableBody");
+        tbody.innerHTML = `<tr><td colspan="5" class="empty" style="color: #e53e3e;">${message}</td></tr>`;
+      }
+
+      // 页面加载时自动加载数据
+      window.addEventListener("DOMContentLoaded", () => {
+        loadStatistics();
+      });
+    </script>
+  </body>
+</html>

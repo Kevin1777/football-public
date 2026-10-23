@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>后台任务列表</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f5f5f5;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .task-card {
+            background: white;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .task-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .task-title {
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .status-running { background: #2196F3; color: white; }
+        .status-completed { background: #4CAF50; color: white; }
+        .status-failed { background: #F44336; color: white; }
+        .status-pending { background: #FFC107; color: black; }
+        .task-info {
+            color: #666;
+            font-size: 14px;
+            margin-bottom: 10px;
+        }
+        .progress-bar {
+            background: #e0e0e0;
+            border-radius: 4px;
+            height: 24px;
+            margin: 10px 0;
+            overflow: hidden;
+        }
+        .progress-fill {
+            background: linear-gradient(90deg, #4CAF50, #8BC34A);
+            height: 100%;
+            transition: width 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .task-stats {
+            display: flex;
+            gap: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+        .btn {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-right: 8px;
+        }
+        .btn-primary { background: #1976d2; color: white; }
+        .btn-danger { background: #f44336; color: white; }
+        .btn-secondary { background: #757575; color: white; }
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+        }
+        .empty {
+            text-align: center;
+            padding: 60px;
+            color: #999;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 后台任务列表</h1>
+        <div style="margin-bottom: 20px;">
+            <button class="btn btn-primary" onclick="refreshTasks()">🔄 刷新</button>
+            <button class="btn btn-secondary" onclick="window.close()">关闭</button>
+        </div>
+        <div id="tasksList">
+            <div class="loading">加载中...</div>
+        </div>
+    </div>
+
+    <script>
+        async function refreshTasks() {
+            const container = document.getElementById('tasksList');
+            container.innerHTML = '<div class="loading">加载中...</div>';
+
+            try {
+                const resp = await fetch('/api/tasks?limit=20');
+                const data = await resp.json();
+
+                if (!data.success || data.count === 0) {
+                    container.innerHTML = '<div class="empty">暂无后台任务</div>';
+                    return;
+                }
+
+                let html = '';
+                for (const task of data.tasks) {
+                    const progress = task.progress || {};
+                    const pct = progress.percentage || 0;
+                    const statusClass = `status-${task.status}`;
+                    const statusText = {
+                        'pending': '等待中',
+                        'running': '运行中',
+                        'completed': '已完成',
+                        'failed': '失败',
+                        'cancelled': '已取消'
+                    }[task.status] || task.status;
+
+                    html += `
+                        <div class="task-card">
+                            <div class="task-header">
+                                <div class="task-title">🎯 采集任务</div>
+                                <span class="status-badge ${statusClass}">${statusText}</span>
+                            </div>
+                            <div class="task-info">
+                                任务ID: ${task.task_id}<br>
+                                创建时间: ${task.created_at ? new Date(task.created_at).toLocaleString('zh-CN') : 'N/A'}
+                            </div>
+                            <div class="progress-bar">
+                                <div class="progress-fill" style="width: ${pct}%">${pct}%</div>
+                            </div>
+                            <div class="task-stats">
+                                <span>进度: ${progress.processed || 0}/${progress.total || 0}</span>
+                                <span>成功: ${progress.success || 0}</span>
+                                <span>失败: ${progress.failed || 0}</span>
+                                <span>跳过: ${progress.skipped || 0}</span>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = `<div class="empty" style="color: red;">加载失败: ${error.message}</div>`;
+            }
+        }
+
+        // 页面加载时自动刷新
+        refreshTasks();
+        
+        // 每5秒自动刷新
+        setInterval(refreshTasks, 5000);
+    </script>
+</body>
+</html>

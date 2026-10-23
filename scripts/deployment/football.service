@@ -1,0 +1,33 @@
+[Unit]
+Description=Football Analysis System
+Documentation=https://github.com/your-repo/football
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/root/football
+
+# 环境变量配置
+Environment="FLASK_HOST=0.0.0.0"
+Environment="FLASK_PORT=5002"
+Environment="FLASK_DEBUG=false"
+Environment="WECOM_WEBHOOK="
+
+# 百度OCR配置（可选，用于验证码识别）
+# Environment="BAIDU_OCR_API_KEY=your_api_key"
+# Environment="BAIDU_OCR_SECRET_KEY=your_secret_key"
+
+# 启动命令
+ExecStart=/root/football/venv/bin/python /root/football/app.py
+
+# 自动重启配置
+Restart=always
+RestartSec=10
+
+# 日志配置
+StandardOutput=append:/root/football/logs/service.log
+StandardError=append:/root/football/logs/service_error.log
+
+[Install]
+WantedBy=multi-user.target

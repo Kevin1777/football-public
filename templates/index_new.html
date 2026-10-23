@@ -1,0 +1,5116 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      http-equiv="Cache-Control"
+      content="no-cache, no-store, must-revalidate"
+    />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>📊 数据工作台</title>
+    <link
+      rel="stylesheet"
+      href="{{ url_for('static', filename='css/app.css') }}?v=20251211_1110"
+    />
+  </head>
+  <body>
+    <div class="app-container">
+      <!-- 移动端遮罩层 -->
+      <div class="sidebar-overlay" id="sidebarOverlay"></div>
+      
+      <!-- ========== Sidebar ========== -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <a href="/" class="sidebar-logo">
+            <span class="icon">📊</span>
+            <span>数据工作台</span>
+            <span class="sidebar-version">v2.1</span>
+          </a>
+        </div>
+
+        <nav class="sidebar-nav">
+          <div class="nav-section">
+            <div class="nav-section-title">核心功能</div>
+            <button class="nav-item active" data-page="dashboard">
+              <span class="icon">🏠</span>
+              <span>首页概览</span>
+            </button>
+            <button class="nav-item" data-page="collect">
+              <span class="icon">📥</span>
+              <span>数据采集</span>
+            </button>
+            <button class="nav-item" data-page="recommend">
+              <span class="icon">🎯</span>
+              <span>AI推荐</span>
+            </button>
+            <button class="nav-item" data-page="backtest">
+              <span class="icon">📊</span>
+              <span>回测验证</span>
+            </button>
+          </div>
+
+          <div class="nav-section">
+            <div class="nav-section-title">工具</div>
+            <button class="nav-item" data-page="push">
+              <span class="icon">🔔</span>
+              <span>推送通知</span>
+            </button>
+            <button class="nav-item" data-page="data">
+              <span class="icon">📂</span>
+              <span>文件管理</span>
+            </button>
+            <button class="nav-item" data-page="pdf">
+              <span class="icon">📋</span>
+              <span>四合一采集</span>
+            </button>
+            <button class="nav-item" data-page="analytics">
+              <span class="icon">📈</span>
+              <span>统计报表</span>
+            </button>
+          </div>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="status-indicator" id="loginStatus">
+            <span class="status-dot offline" id="statusDot"></span>
+            <span id="statusText">加载中...</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ========== Main Content ========== -->
+      <main class="main-content">
+        <header class="main-header">
+          <button
+            class="btn btn-ghost mobile-menu-btn"
+            id="mobileMenuBtn"
+            style="display: none"
+          >
+            ☰
+          </button>
+          <h1 class="header-title">📊 数据工作台</h1>
+          <div class="header-actions">
+            <button
+              class="btn btn-sm btn-ghost"
+              id="themeToggleBtn"
+              title="切换主题 (Alt+T)"
+            >
+              🌙
+            </button>
+            <button
+              class="btn btn-sm btn-secondary"
+              id="refreshStatusBtn"
+              title="刷新状态 (Alt+R)"
+            >
+              🔄 刷新状态
+            </button>
+            <button
+              class="btn btn-sm btn-primary"
+              id="quickLoginBtn"
+              title="快捷登录 (Alt+L)"
+            >
+              🔐 快捷登录
+            </button>
+          </div>
+        </header>
+
+        <div class="content-area" id="contentArea">
+          <!-- ========== Section: Dashboard ========== -->
+          <section class="page-section" id="section-dashboard">
+            <h2 class="section-title">📊 系统概览</h2>
+
+            <!-- Quick Stats -->
+            <div class="stats-grid mb-lg">
+              <div class="stat-card">
+                <div class="stat-value" id="statTodayMatches">--</div>
+                <div class="stat-label">今日比赛</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value success" id="statCachedData">--</div>
+                <div class="stat-label">缓存数据</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value" id="statLastBacktest">--</div>
+                <div class="stat-label">近期胜率</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value warning" id="statSchedulerStatus">
+                  --
+                </div>
+                <div class="stat-label">定时任务</div>
+              </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="card mb-lg">
+              <div class="card-header">
+                <h3 class="card-title">⚡ 快捷操作</h3>
+                <button
+                  class="btn btn-sm btn-secondary"
+                  onclick="exportData()"
+                  title="导出数据 (Alt+E)"
+                >
+                  📤 导出数据
+                </button>
+              </div>
+              <div class="card-body">
+                <div class="btn-group">
+                  <button
+                    class="btn btn-primary"
+                    onclick="scrollToSection('collect')"
+                  >
+                    🔄 同步数据
+                  </button>
+                  <button
+                    class="btn btn-success"
+                    onclick="scrollToSection('recommend')"
+                  >
+                    🧠 智能分析
+                  </button>
+                  <button
+                    class="btn btn-warning"
+                    onclick="scrollToSection('backtest')"
+                  >
+                    📊 历史验证
+                  </button>
+                  <button
+                    class="btn btn-secondary"
+                    onclick="scrollToSection('push')"
+                  >
+                    🔔 消息通知
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Login Card -->
+            <div
+              class="card card-primary mb-lg"
+              id="loginCard"
+              style="display: none"
+            >
+              <div class="card-header">
+                <h3 class="card-title">🔐 登录必发指数网</h3>
+              </div>
+              <div class="card-body">
+                <div class="alert alert-info mb-md">
+                  首次登录需要人工输入验证码，成功后会自动复用 cookies。
+                </div>
+                <div class="btn-group mb-md">
+                  <button class="btn btn-primary" id="fetchCaptchaBtn">
+                    获取验证码
+                  </button>
+                  <input
+                    type="text"
+                    class="form-input"
+                    id="captchaInput"
+                    placeholder="请输入验证码"
+                    style="max-width: 200px"
+                  />
+                  <button
+                    class="btn btn-success"
+                    id="submitCaptchaBtn"
+                    disabled
+                  >
+                    提交
+                  </button>
+                </div>
+                <img
+                  id="captchaImage"
+                  src=""
+                  alt="验证码"
+                  style="
+                    display: none;
+                    max-width: 260px;
+                    border-radius: 8px;
+                    border: 1px solid var(--border-color);
+                  "
+                />
+              </div>
+            </div>
+
+            <!-- Recent Activity -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">📋 使用说明</h3>
+              </div>
+              <div class="card-body">
+                <div class="alert alert-success mb-md">
+                  <strong>推荐工作流：</strong> 登录 → 同步数据 → 智能分析 →
+                  查看验证结果
+                </div>
+                <div class="form-row" style="gap: 24px">
+                  <div style="flex: 1">
+                    <strong style="color: var(--text-primary)">功能模块</strong>
+                    <ul
+                      style="
+                        color: var(--text-secondary);
+                        padding-left: 20px;
+                        line-height: 2;
+                        margin-top: 8px;
+                      "
+                    >
+                      <li><strong>数据同步</strong>：获取列表和明细数据</li>
+                      <li><strong>智能分析</strong>：基于算法生成建议</li>
+                      <li><strong>历史验证</strong>：验证历史准确性</li>
+                      <li><strong>消息通知</strong>：测试推送功能</li>
+                    </ul>
+                  </div>
+                  <div style="flex: 1">
+                    <strong style="color: var(--text-primary)"
+                      >⌨️ 快捷键</strong
+                    >
+                    <ul
+                      style="
+                        color: var(--text-secondary);
+                        padding-left: 20px;
+                        line-height: 2;
+                        margin-top: 8px;
+                      "
+                    >
+                      <li><kbd>Alt+T</kbd> 切换主题</li>
+                      <li><kbd>Alt+R</kbd> 刷新状态</li>
+                      <li><kbd>Alt+E</kbd> 导出数据</li>
+                      <li><kbd>Alt+1~9</kbd> 跳转模块</li>
+                      <li><kbd>Esc</kbd> 关闭日志</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ========== Section: Data Collection ========== -->
+          <section class="page-section" id="section-collect">
+            <h2 class="section-title">🔄 数据同步</h2>
+
+            <!-- 🔥 合并后的采集面板 -->
+            <div class="card card-success mb-lg">
+              <div class="card-header">
+                <h3 class="card-title">📅 完场数据采集（四合一）</h3>
+              </div>
+              <div class="card-body">
+                <!-- 日期选择 -->
+                <div class="form-row mb-md" style="display: flex; gap: 16px; flex-wrap: wrap;">
+                  <div class="form-group" style="margin-bottom: 0">
+                    <label class="form-label">开始日期</label>
+                    <input type="date" class="form-input" id="rangeStartDate" />
+                  </div>
+                  <div class="form-group" style="margin-bottom: 0">
+                    <label class="form-label">结束日期（默认昨天）</label>
+                    <input type="date" class="form-input" id="rangeEndDate" />
+                  </div>
+                </div>
+                
+                <!-- 采集选项 -->
+                <div class="form-row mb-md" style="display: flex; gap: 16px; flex-wrap: wrap;">
+                  <label class="form-checkbox">
+                    <input type="checkbox" id="rangeFilterHandicap" checked />
+                    <span>仅采集有盘口的比赛</span>
+                  </label>
+                  <label class="form-checkbox">
+                    <input type="checkbox" id="superModeCheckbox" checked />
+                    <span>🔥 四合一模式（标盘+大小球+让球+比分）</span>
+                  </label>
+                  <label class="form-checkbox">
+                    <input type="checkbox" id="skipCachedCheckbox" checked />
+                    <span>跳过已采集的比赛</span>
+                  </label>
+                </div>
+                
+                <!-- 操作按钮 -->
+                <div class="btn-group mb-md">
+                  <button class="btn btn-success" id="queryFinishedBtn">
+                    🔍 查询比赛
+                  </button>
+                  <button
+                    class="btn btn-primary"
+                    id="startRangeConcurrentBtn"
+                    title="后台并发采集，支持时间追踪、登录失效自动恢复"
+                  >
+                    🚀 开始采集
+                  </button>
+                  <button
+                    class="btn btn-info"
+                    id="startSerialCollectBtn"
+                    title="串行采集（一场一场采集），适合低配置服务器"
+                  >
+                    🐌 串行采集
+                  </button>
+                  <button class="btn btn-secondary" id="viewTasksBtn" onclick="toggleTasksList()">
+                    📋 查看任务
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 🔥 后台任务列表 -->
+            <div class="card mb-lg" id="tasksListCard" style="display: none;">
+              <div class="card-header">
+                <h3 class="card-title">🚀 后台任务列表</h3>
+                <div style="display: flex; gap: 8px;">
+                  <button class="btn btn-sm btn-primary" onclick="refreshTasksList()">🔄 刷新</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteAllTasks()">🗑️ 删除全部</button>
+                </div>
+              </div>
+              <div class="card-body" id="tasksListContainer">
+                <div style="text-align: center; padding: 20px; color: #666;">
+                  加载中...
+                </div>
+              </div>
+            </div>
+
+            <!-- Progress -->
+            <div class="card mb-lg" id="collectProgressCard" style="display: none;">
+              <div class="card-header">
+                <h3 class="card-title">📊 采集进度</h3>
+                <span class="badge badge-warning" id="collectPhase"
+                  >准备中</span
+                >
+              </div>
+              <div class="card-body">
+                <div class="progress progress-lg mb-md">
+                  <div
+                    class="progress-bar"
+                    id="collectProgressBar"
+                    style="width: 0%"
+                  >
+                    0%
+                  </div>
+                </div>
+                <div
+                  class="text-muted"
+                  id="collectProgressDetail"
+                  style="text-align: center"
+                >
+                  准备开始采集...
+                </div>
+
+                <!-- 🆕 每场比赛状态列表 -->
+                <div
+                  id="matchStatusList"
+                  style="
+                    margin-top: 12px;
+                    max-height: 300px;
+                    overflow-y: auto;
+                    background: var(--color-bg-secondary);
+                    border-radius: 8px;
+                    border: 1px solid var(--color-border);
+                  "
+                ></div>
+
+                <!-- Session Info -->
+                <div class="alert alert-info mt-md hidden" id="sessionInfo">
+                  <strong>当前会话ID：</strong>
+                  <code id="currentSessionId"></code>
+                  <button
+                    class="btn btn-sm btn-secondary"
+                    onclick="copySessionId()"
+                    style="margin-left: 8px"
+                  >
+                    📋 复制
+                  </button>
+                </div>
+
+                <!-- Error List -->
+                <div
+                  class="alert alert-danger mt-md hidden"
+                  id="collectErrorList"
+                >
+                  <strong
+                    >❌ 错误详情 (<span id="errorCount">0</span>场失败)</strong
+                  >
+                  <div
+                    id="errorListContent"
+                    style="margin-top: 8px; max-height: 200px; overflow-y: auto"
+                  ></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Match List -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">📋 比赛列表</h3>
+                <div class="flex items-center gap-sm">
+                  <select
+                    class="form-select"
+                    id="leagueFilter"
+                    style="width: auto"
+                  >
+                    <option value="all">全部联赛</option>
+                  </select>
+                  <span class="text-muted" id="filterStats"></span>
+                </div>
+              </div>
+              <div class="card-body" id="finishedMatchList">
+                <div class="empty-state">
+                  <div class="icon">📅</div>
+                  <p>请选择日期查询比赛</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ========== Section: Recommendation ========== -->
+          <section class="page-section" id="section-recommend">
+            <h2 class="section-title">🧠 智能分析</h2>
+            <div class="card card-info mb-lg">
+              <div class="card-header">
+                <h3 class="card-title">🎯 AI推荐引擎</h3>
+              </div>
+              <div class="card-body">
+                <div class="alert alert-info mb-md">
+                  基于 X1 全侦破版，结合交易明细和让球盘口生成推荐。
+                  选择下方比赛后点击"生成推荐"按钮。
+                </div>
+                <div class="btn-group mb-lg">
+                  <button class="btn btn-primary" id="fetchMatchesBtn">
+                    📋 获取今日场次
+                  </button>
+                  <button class="btn btn-secondary" id="refreshMatchesBtn">
+                    🔄 刷新列表
+                  </button>
+                  <button class="btn btn-success" id="loadFromBiaopanBtn">
+                    📂 读取盘口数据
+                  </button>
+                </div>
+                <div class="form-row">
+                  <!-- 🔥 已移除盘口过滤选项，SB有数据的就是主盘口 -->
+                  <div class="flex items-center gap-sm">
+                    <span class="text-muted">查询未来</span>
+                    <select
+                      class="form-select"
+                      id="futureDaysSelect"
+                      style="width: auto"
+                    >
+                      <option value="0" selected>0天（不查未来）</option>
+                      <option value="1">1天（今天+明天）</option>
+                      <option value="2">2天（今天+后2天）</option>
+                      <option value="3">3天（今天+后3天）</option>
+                      <option value="7">7天（今天+未来一周）</option>
+                    </select>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">📋 可用场次</h3>
+              </div>
+              <div class="card-body" id="matchList">
+                <div class="empty-state">
+                  <div class="icon">⚽</div>
+                  <p>点击"获取今日场次"加载比赛列表</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ========== Section: Backtest ========== -->
+          <section class="page-section" id="section-backtest">
+            <h2 class="section-title">📊 历史验证</h2>
+            <div class="card card-purple mb-lg">
+              <div class="card-header">
+                <h3 class="card-title">📈 批量回测 - X1 JSON推荐引擎</h3>
+              </div>
+              <div class="card-body">
+                <div class="alert alert-info mb-md">
+                  选择日期后，系统会读取本地缓存数据并进行批量回测验证。
+                </div>
+                <div class="form-row mb-md">
+                  <div class="form-group" style="margin-bottom: 0">
+                    <label class="form-label">回测日期</label>
+                    <input type="date" class="form-input" id="backtestDate" />
+                  </div>
+                </div>
+                <button class="btn btn-primary btn-lg" id="startBacktestBtn">
+                  🏁 开始批量回测
+                </button>
+              </div>
+            </div>
+
+            <!-- Backtest Progress -->
+            <div class="card mb-lg hidden" id="backtestProgressCard">
+              <div class="card-body">
+                <div class="progress progress-lg mb-md">
+                  <div
+                    class="progress-bar"
+                    id="backtestProgressBar"
+                    style="width: 0%"
+                  >
+                    0%
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Backtest Stats -->
+            <div class="card mb-lg hidden" id="backtestStatsCard">
+              <div class="card-header">
+                <h3 class="card-title">📊 回测统计</h3>
+              </div>
+              <div class="card-body">
+                <div class="stats-grid">
+                  <div class="stat-card">
+                    <div class="stat-value" id="btStatTotal">0</div>
+                    <div class="stat-label">总场次</div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-value success" id="btStatRecommended">
+                      0
+                    </div>
+                    <div class="stat-label">推荐场次</div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-value success" id="btStatWin">0</div>
+                    <div class="stat-label">✅ 全赢</div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-value danger" id="btStatLoss">0</div>
+                    <div class="stat-label">❌ 全输</div>
+                  </div>
+                  <div class="stat-card">
+                    <div
+                      class="stat-value"
+                      id="btStatWinRate"
+                      style="color: var(--primary)"
+                    >
+                      0%
+                    </div>
+                    <div class="stat-label">🎯 引擎胜率</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Backtest Log -->
+            <div class="card hidden" id="backtestLogCard">
+              <div class="card-header">
+                <h3 class="card-title">📋 回测日志</h3>
+              </div>
+              <div class="card-body" style="padding: 0">
+                <div class="log-console">
+                  <div class="log-body" id="backtestLogContent"></div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ========== Section: Push Test ========== -->
+          <section class="page-section" id="section-push">
+            <h2 class="section-title">🔔 消息通知</h2>
+            <div class="card card-purple mb-lg">
+              <div class="card-header">
+                <h3 class="card-title">📱 推送测试</h3>
+              </div>
+              <div class="card-body">
+                <p class="text-muted mb-md">
+                  测试企业微信或 Telegram 推送是否正常工作。
+                </p>
+                <div class="btn-group mb-lg">
+                  <button class="btn btn-primary" id="testWeComPush">
+                    📱 测试企业微信
+                  </button>
+                  <button
+                    class="btn btn-info"
+                    id="testTelegramPush"
+                    style="background: var(--teal)"
+                  >
+                    📲 测试Telegram
+                  </button>
+                  <button class="btn btn-success" id="testAllPush">
+                    ✅ 测试所有渠道
+                  </button>
+                </div>
+
+                <div class="alert alert-warning mb-md">
+                  <strong>🧪 完整推送测试</strong><br />
+                  一键测试所有推送功能，包括：告警、推荐、整点播报、赛前提醒等。
+                  <span class="text-danger font-bold"
+                    >⚠️ 会发送多条测试消息</span
+                  >
+                </div>
+                <button class="btn btn-warning" id="testAllPushFunctions">
+                  🧪 运行完整测试
+                </button>
+              </div>
+            </div>
+
+            <div class="card card-warning mb-lg">
+              <div class="card-header">
+                <h3 class="card-title">📢 整点播报测试</h3>
+              </div>
+              <div class="card-body">
+                <div class="flex items-center gap-md mb-md flex-wrap">
+                  <select
+                    class="form-select"
+                    id="broadcastHour"
+                    style="width: auto"
+                  >
+                    <option value="">当前小时</option>
+                  </select>
+                  <button class="btn btn-warning" id="testHourlyBroadcast">
+                    📢 测试整点播报
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div class="card card-danger mb-lg">
+              <div class="card-header">
+                <h3 class="card-title">🔔 赛前推荐测试</h3>
+              </div>
+              <div class="card-body">
+                <p class="text-muted mb-md">
+                  模拟"当前时间"，测试赛前 N 分钟推荐推送逻辑。
+                </p>
+                <div class="flex items-center gap-md mb-md flex-wrap">
+                  <input
+                    type="number"
+                    class="form-input"
+                    id="preMatchMinutes"
+                    placeholder="赛前分钟数（默认5）"
+                    style="width: 150px"
+                  />
+                  <input
+                    type="text"
+                    class="form-input"
+                    id="preMatchTime"
+                    placeholder="模拟时间，如 20:53"
+                    style="width: 180px"
+                  />
+                  <button class="btn btn-danger" id="testPreMatch">
+                    🔔 测试赛前推荐
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Push Result -->
+            <div class="card hidden" id="pushResultCard">
+              <div class="card-header">
+                <h3 class="card-title">📋 测试结果</h3>
+              </div>
+              <div class="card-body" id="pushTestResult"></div>
+            </div>
+          </section>
+
+          <!-- ========== Section: Data Management ========== -->
+          <section class="page-section" id="section-data">
+            <h2 class="section-title">📂 数据管理</h2>
+            <div class="card card-info mb-lg">
+              <div class="card-header">
+                <h3 class="card-title">📂 数据管理</h3>
+              </div>
+              <div class="card-body">
+                <div class="btn-group mb-md">
+                  <button class="btn btn-primary" id="loadCacheOverview">
+                    📊 加载统计概览
+                  </button>
+                  <button class="btn btn-secondary" id="refreshCacheList">
+                    🔄 刷新缓存列表
+                  </button>
+                  <input
+                    type="date"
+                    class="form-input"
+                    id="cacheDateFilter"
+                    style="width: auto"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <!-- Cache Overview -->
+            <div class="card mb-lg hidden" id="cacheOverviewCard">
+              <div class="card-header">
+                <h3 class="card-title">📈 按日期统计</h3>
+              </div>
+              <div class="card-body" style="padding: 0">
+                <div
+                  class="table-container"
+                  style="max-height: 300px; overflow-y: auto"
+                >
+                  <table>
+                    <thead>
+                      <tr>
+                        <th>日期</th>
+                        <th>文件数</th>
+                        <th>总行数</th>
+                        <th>大小(MB)</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cacheOverviewBody"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- Cache File List -->
+            <div class="card hidden" id="cacheListCard">
+              <div class="card-header">
+                <h3 class="card-title">📋 缓存文件列表</h3>
+                <span class="text-muted" id="cacheListStats"></span>
+              </div>
+              <div class="card-body" style="padding: 0">
+                <div
+                  class="table-container"
+                  style="max-height: 400px; overflow-y: auto"
+                >
+                  <table>
+                    <thead>
+                      <tr>
+                        <th style="width: 40px">
+                          <input type="checkbox" id="selectAllCaches" />
+                        </th>
+                        <th>日期</th>
+                        <th>比赛</th>
+                        <th>行数</th>
+                        <th>大小(KB)</th>
+                        <th>缓存时间</th>
+                      </tr>
+                    </thead>
+                    <tbody id="cacheListBody"></tbody>
+                  </table>
+                </div>
+              </div>
+              <div class="card-footer">
+                <button
+                  class="btn btn-danger btn-sm"
+                  id="deleteSelectedCaches"
+                  disabled
+                >
+                  🗑️ 删除选中
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ========== Section: JSON Extract ========== -->
+          <section class="page-section" id="section-pdf">
+            <h2 class="section-title">📥 JSON提取</h2>
+            <div class="card mb-lg">
+              <div class="card-header">
+                <h3 class="card-title">📥 赛前数据JSON提取</h3>
+                <div class="btn-group">
+                  <button class="btn btn-sm btn-primary" onclick="loadJsonList()">🔄 刷新列表</button>
+                  <button class="btn btn-sm btn-danger" onclick="deleteAllJsonFiles()">🗑️ 一键删除全部</button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div class="alert alert-info mb-md">
+                  赛前15分钟自动采集的比赛数据会显示在这里，点击下载保存JSON文件。
+                </div>
+                
+                <!-- JSON文件列表 -->
+                <div id="jsonListContainer">
+                  <div class="text-center text-muted py-lg">
+                    <span class="loading-spinner"></span> 加载中...
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- JSON预览卡片 -->
+            <div class="card mb-lg" id="jsonPreviewCard" style="display: none;">
+              <div class="card-header">
+                <h3 class="card-title">📄 JSON预览</h3>
+                <span id="jsonPreviewFileName" class="text-muted"></span>
+              </div>
+              <div class="card-body">
+                <div class="btn-group mb-md">
+                  <button class="btn btn-success" id="downloadJsonBtn" onclick="downloadCurrentJson()">
+                    💾 下载JSON文件
+                  </button>
+                  <button class="btn btn-secondary" onclick="copyJsonToClipboard()">
+                    📋 复制到剪贴板
+                  </button>
+                </div>
+                <div class="log-console" style="max-height: 400px; overflow: auto;">
+                  <pre id="jsonPreviewContent" style="margin: 0; white-space: pre-wrap; font-size: 12px; color: #00ff00;"></pre>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <script>
+            // JSON提取功能
+            let currentJsonData = null;
+            let currentJsonFileName = '';
+
+            async function loadJsonList() {
+              const container = document.getElementById('jsonListContainer');
+              container.innerHTML = '<div class="text-center text-muted py-lg"><span class="loading-spinner"></span> 加载中...</div>';
+              
+              try {
+                const response = await fetch('/api/json/list');
+                const data = await response.json();
+                
+                if (data.success && data.files && data.files.length > 0) {
+                  // 桌面端表格
+                  let tableHtml = '<div class="table-container desktop-only"><table class="data-table"><thead><tr>';
+                  tableHtml += '<th>比赛</th><th>联赛</th><th>时间</th><th>文件大小</th><th>操作</th>';
+                  tableHtml += '</tr></thead><tbody>';
+                  
+                  // 移动端卡片
+                  let mobileHtml = '<div class="json-list-mobile mobile-only">';
+                  
+                  data.files.forEach(file => {
+                    const homeName = file.home_team || '未知';
+                    const awayName = file.away_team || '未知';
+                    const league = file.league || '未知';
+                    const matchTime = file.match_time || file.created_at || '未知';
+                    const fileSize = formatFileSize(file.size || 0);
+                    
+                    // 桌面端表格行
+                    tableHtml += `<tr>
+                      <td><strong>${homeName}</strong> vs <strong>${awayName}</strong></td>
+                      <td>${league}</td>
+                      <td>${matchTime}</td>
+                      <td>${fileSize}</td>
+                      <td>
+                        <button class="btn btn-sm btn-primary" onclick="previewJson('${file.path}', '${file.filename}')">👁️ 预览</button>
+                        <button class="btn btn-sm btn-success" onclick="downloadJsonFile('${file.path}', '${file.filename}')">💾 下载</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteJsonFile('${file.path}', '${file.filename}')">🗑️ 删除</button>
+                      </td>
+                    </tr>`;
+                    
+                    // 移动端卡片
+                    mobileHtml += `<div class="json-card">
+                      <div class="json-card-header">${homeName} vs ${awayName}</div>
+                      <div class="json-card-meta">
+                        <span>🏆 ${league}</span>
+                        <span>⏰ ${matchTime}</span>
+                        <span>📦 ${fileSize}</span>
+                      </div>
+                      <div class="json-card-actions">
+                        <button class="btn btn-sm btn-success" onclick="downloadJsonFile('${file.path}', '${file.filename}')">💾 下载</button>
+                        <button class="btn btn-sm btn-primary" onclick="previewJson('${file.path}', '${file.filename}')">👁️ 预览</button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteJsonFile('${file.path}', '${file.filename}')">🗑️</button>
+                      </div>
+                    </div>`;
+                  });
+                  
+                  tableHtml += '</tbody></table></div>';
+                  mobileHtml += '</div>';
+                  
+                  container.innerHTML = tableHtml + mobileHtml;
+                } else {
+                  container.innerHTML = '<div class="alert alert-warning">暂无JSON文件。赛前15分钟采集的数据会自动出现在这里。</div>';
+                }
+              } catch (error) {
+                container.innerHTML = `<div class="alert alert-danger">加载失败: ${error.message}</div>`;
+              }
+            }
+
+            async function previewJson(path, filename) {
+              try {
+                const response = await fetch(`/api/download/json/${path}?preview=true`);
+                const data = await response.json();
+                
+                currentJsonData = data;
+                currentJsonFileName = filename;
+                
+                document.getElementById('jsonPreviewCard').style.display = 'block';
+                document.getElementById('jsonPreviewFileName').textContent = filename;
+                document.getElementById('jsonPreviewContent').textContent = JSON.stringify(data, null, 2);
+                
+                // 滚动到预览区域
+                document.getElementById('jsonPreviewCard').scrollIntoView({ behavior: 'smooth' });
+              } catch (error) {
+                alert('预览失败: ' + error.message);
+              }
+            }
+
+            function downloadCurrentJson() {
+              if (!currentJsonData) return;
+              
+              const blob = new Blob([JSON.stringify(currentJsonData, null, 2)], { type: 'application/json' });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = currentJsonFileName || 'data.json';
+              a.click();
+              URL.revokeObjectURL(url);
+            }
+
+            function copyJsonToClipboard() {
+              if (!currentJsonData) return;
+              
+              navigator.clipboard.writeText(JSON.stringify(currentJsonData, null, 2)).then(() => {
+                alert('已复制到剪贴板！');
+              }).catch(err => {
+                alert('复制失败: ' + err);
+              });
+            }
+
+            function formatFileSize(bytes) {
+              if (bytes === 0) return '0 B';
+              const k = 1024;
+              const sizes = ['B', 'KB', 'MB'];
+              const i = Math.floor(Math.log(bytes) / Math.log(k));
+              return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+            }
+
+            // 🔥 iOS 兼容的下载函数
+            async function downloadJsonFile(path, filename) {
+              try {
+                // 获取 JSON 数据
+                const response = await fetch(`/api/download/json/${path}?preview=true`);
+                const data = await response.json();
+                
+                // 转换为 Blob
+                const jsonStr = JSON.stringify(data, null, 2);
+                const blob = new Blob([jsonStr], { type: 'application/json' });
+                
+                // 检测是否为 iOS
+                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+                
+                if (isIOS) {
+                  // iOS: 使用 Web Share API 或打开新窗口
+                  if (navigator.share && navigator.canShare && navigator.canShare({ files: [new File([blob], filename, { type: 'application/json' })] })) {
+                    // 支持文件分享
+                    const file = new File([blob], filename, { type: 'application/json' });
+                    await navigator.share({
+                      files: [file],
+                      title: filename
+                    });
+                  } else {
+                    // 不支持分享，提示用户长按保存
+                    const url = URL.createObjectURL(blob);
+                    const newWindow = window.open(url, '_blank');
+                    if (newWindow) {
+                      alert('请长按页面内容，选择"存储到文件"保存');
+                    } else {
+                      // 弹窗被阻止，使用复制到剪贴板
+                      await navigator.clipboard.writeText(jsonStr);
+                      alert('已复制JSON内容到剪贴板，请粘贴到备忘录或文件中保存');
+                    }
+                    setTimeout(() => URL.revokeObjectURL(url), 60000);
+                  }
+                } else {
+                  // 非 iOS: 使用标准下载方式
+                  const url = URL.createObjectURL(blob);
+                  const a = document.createElement('a');
+                  a.href = url;
+                  a.download = filename;
+                  document.body.appendChild(a);
+                  a.click();
+                  document.body.removeChild(a);
+                  URL.revokeObjectURL(url);
+                }
+              } catch (error) {
+                alert('下载失败: ' + error.message);
+              }
+            }
+
+            async function deleteJsonFile(path, filename) {
+              if (!confirm(`确定要删除文件 "${filename}" 吗？`)) return;
+              
+              try {
+                const response = await fetch('/api/json/delete', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ path: path })
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                  alert('删除成功！');
+                  loadJsonList();  // 刷新列表
+                  // 如果正在预览这个文件，隐藏预览
+                  if (currentJsonFileName === filename) {
+                    document.getElementById('jsonPreviewCard').style.display = 'none';
+                    currentJsonData = null;
+                    currentJsonFileName = '';
+                  }
+                } else {
+                  alert('删除失败: ' + (data.error || data.message));
+                }
+              } catch (error) {
+                alert('删除失败: ' + error.message);
+              }
+            }
+
+            // 🔥 一键删除全部JSON文件
+            async function deleteAllJsonFiles() {
+              if (!confirm('⚠️ 确定要删除所有JSON文件吗？\n\n此操作不可恢复！\n\n（盘口数据.json 和 标盘指数_latest.json 不会被删除）')) {
+                return;
+              }
+              
+              // 二次确认
+              if (!confirm('⚠️ 再次确认：真的要删除所有JSON文件吗？')) {
+                return;
+              }
+              
+              try {
+                const response = await fetch('/api/json/delete_all', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' }
+                });
+                const data = await response.json();
+                
+                if (data.success) {
+                  let message = `✅ 删除完成！\n\n成功删除: ${data.deleted_count} 个文件`;
+                  if (data.failed_count > 0) {
+                    message += `\n失败: ${data.failed_count} 个文件`;
+                    if (data.failed_files && data.failed_files.length > 0) {
+                      message += `\n\n失败文件:\n${data.failed_files.join('\n')}`;
+                    }
+                  }
+                  alert(message);
+                  
+                  // 刷新列表
+                  loadJsonList();
+                  
+                  // 隐藏预览
+                  document.getElementById('jsonPreviewCard').style.display = 'none';
+                  currentJsonData = null;
+                  currentJsonFileName = '';
+                } else {
+                  alert('删除失败: ' + (data.error || data.message));
+                }
+              } catch (error) {
+                alert('删除失败: ' + error.message);
+              }
+            }
+
+            // 页面加载时自动加载JSON列表
+            document.addEventListener('DOMContentLoaded', function() {
+              // 当切换到PDF页面时加载列表
+              const navItems = document.querySelectorAll('.nav-item[data-page="pdf"]');
+              navItems.forEach(item => {
+                item.addEventListener('click', loadJsonList);
+              });
+              
+              // 🔥 页面加载时立即加载JSON列表（避免一直显示"加载中"）
+              loadJsonList();
+            });
+          </script>
+
+          <!-- ========== Section: Scheduler ========== -->
+          <section class="page-section" id="section-scheduler">
+            <h2 class="section-title">⏰ 定时任务</h2>
+            <div class="card card-warning mb-lg">
+              <div class="card-header">
+                <h3 class="card-title">⏰ 定时任务管理</h3>
+              </div>
+              <div class="card-body">
+                <p class="text-muted mb-md">
+                  每天凌晨3点自动采集昨天的完场比赛（仅采集有盘口的比赛）
+                </p>
+                <div class="btn-group mb-md">
+                  <button class="btn btn-warning" id="checkSchedulerStatus">
+                    🔍 查看状态
+                  </button>
+                  <button class="btn btn-primary" id="triggerScheduler">
+                    ▶️ 手动触发
+                  </button>
+                </div>
+                <div class="alert alert-info hidden" id="schedulerInfo">
+                  <div class="mb-sm">
+                    <strong>任务ID:</strong> <span id="jobId"></span>
+                  </div>
+                  <div class="mb-sm">
+                    <strong>任务名称:</strong> <span id="jobName"></span>
+                  </div>
+                  <div class="mb-sm">
+                    <strong>下次执行:</strong> <span id="jobNextRun"></span>
+                  </div>
+                  <div>
+                    <strong>执行规则:</strong> <span id="jobTrigger"></span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- ========== Section: Analytics ========== -->
+          <section class="page-section" id="section-analytics">
+            <h2 class="section-title">📈 统计分析</h2>
+
+            <!-- 总体统计 -->
+            <div class="card mb-lg">
+              <div class="card-header">
+                <h3 class="card-title">📊 总体统计</h3>
+                <button
+                  class="btn btn-sm btn-primary"
+                  onclick="loadAnalyticsData()"
+                >
+                  🔄 刷新
+                </button>
+              </div>
+              <div class="card-body">
+                <div
+                  class="stats-grid"
+                  style="grid-template-columns: repeat(5, 1fr)"
+                >
+                  <div class="stat-card">
+                    <div class="stat-value" id="analyticTotal">--</div>
+                    <div class="stat-label">总推荐数</div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-value" id="analyticReviewed">--</div>
+                    <div class="stat-label">已审查</div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-value success" id="analyticCorrect">
+                      --
+                    </div>
+                    <div class="stat-label">正确</div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-value danger" id="analyticWrong">--</div>
+                    <div class="stat-label">错误</div>
+                  </div>
+                  <div class="stat-card">
+                    <div class="stat-value warning" id="analyticAccuracy">
+                      --%
+                    </div>
+                    <div class="stat-label">准确率</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 按置信度统计 -->
+            <div class="card mb-lg">
+              <div class="card-header">
+                <h3 class="card-title">🎯 按置信度统计</h3>
+              </div>
+              <div class="card-body">
+                <div class="table-container">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th>置信度</th>
+                        <th>总数</th>
+                        <th>正确</th>
+                        <th>错误</th>
+                        <th>准确率</th>
+                        <th>进度</th>
+                      </tr>
+                    </thead>
+                    <tbody id="confidenceStatsBody">
+                      <tr>
+                        <td
+                          colspan="6"
+                          style="
+                            text-align: center;
+                            color: var(--text-secondary);
+                          "
+                        >
+                          点击刷新加载数据
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <!-- 近期趋势 -->
+            <div class="card mb-lg">
+              <div class="card-header">
+                <h3 class="card-title">📅 近期趋势（最近30天）</h3>
+                <div style="display: flex; gap: 8px;">
+                  <button
+                    class="btn btn-sm btn-warning"
+                    onclick="triggerReview()"
+                  >
+                    🔍 手动审查昨日
+                  </button>
+                  <button
+                    class="btn btn-sm btn-danger"
+                    onclick="deleteAllRecommendations()"
+                  >
+                    🗑️ 一键删除全部
+                  </button>
+                </div>
+              </div>
+              <div class="card-body">
+                <div
+                  id="trendChart"
+                  style="
+                    min-height: 300px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                  "
+                >
+                  <div class="empty-state">
+                    <div class="icon">📊</div>
+                    <p>点击刷新加载趋势数据</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 待审查列表 -->
+            <div class="card">
+              <div class="card-header">
+                <h3 class="card-title">⏳ 待审查推荐</h3>
+                <span class="badge badge-warning" id="pendingCount">0</span>
+              </div>
+              <div class="card-body" id="pendingList">
+                <div class="empty-state">
+                  <div class="icon">✅</div>
+                  <p>暂无待审查的推荐</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+    </div>
+
+    <!-- Log已改用hover触发条方式 -->
+
+    <!-- Log Drawer (Hover to Open) -->
+    <div class="log-drawer" id="logDrawer">
+      <!-- 🆕 侧边触发条（点击打开） -->
+      <div class="log-drawer-trigger" onclick="openLogDrawer()">📊 日志</div>
+      <div class="log-drawer-header">
+        <span class="log-drawer-title">📊 实时日志</span>
+        <span class="log-drawer-hint">👈 向右滑动关闭</span>
+      </div>
+      <div class="log-drawer-body" id="logArea"></div>
+      <div class="log-drawer-footer">
+        <span class="text-muted" id="logCount">0 条日志</span>
+        <button class="btn btn-sm btn-ghost" onclick="clearLog()">
+          🗑️ 清空
+        </button>
+      </div>
+    </div>
+
+    <!-- Session Select Modal -->
+    <div class="modal-overlay" id="sessionModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="modal-title">📋 选择采集会话</h3>
+          <button class="modal-close" onclick="closeSessionModal()">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body" id="sessionList"></div>
+      </div>
+    </div>
+
+    <!-- Resume Session Modal -->
+    <div class="modal-overlay" id="resumeModal">
+      <div class="modal">
+        <div class="modal-header">
+          <h3 class="modal-title">🔄 断点续传</h3>
+          <button class="modal-close" onclick="closeResumeModal()">
+            &times;
+          </button>
+        </div>
+        <div class="modal-body">
+          <div class="form-group">
+            <label class="form-label">会话ID</label>
+            <input
+              type="text"
+              class="form-input"
+              id="resumeSessionId"
+              placeholder="输入会话ID（如：20251120_225830）"
+            />
+          </div>
+          <p class="text-muted">如果采集中断，输入会话ID可从断点处继续采集</p>
+        </div>
+        <div class="modal-footer">
+          <button class="btn btn-secondary" onclick="closeResumeModal()">
+            取消
+          </button>
+          <button class="btn btn-warning" id="confirmResumeBtn">
+            恢复采集
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Background Tasks Modal (已废弃，使用页面内显示) -->
+    <!-- 
+    <div class="modal-overlay" id="tasksModal" style="display: none;">
+    </div>
+    -->
+
+    <script>
+      // ========== Global Variables ==========
+      let currentSession = null;
+      let matchCache = [];
+      let finishedMatchesData = [];
+      let backtestResults = [];
+
+      // ========== Navigation - Smooth Scroll ==========
+      function scrollToSection(sectionId) {
+        const section = document.getElementById(`section-${sectionId}`);
+        if (section) {
+          section.scrollIntoView({ behavior: "smooth", block: "start" });
+          updateActiveNav(sectionId);
+        }
+      }
+
+      function updateActiveNav(sectionId) {
+        document.querySelectorAll(".nav-item").forEach((item) => {
+          item.classList.toggle("active", item.dataset.page === sectionId);
+        });
+      }
+
+      // Bind nav clicks - scroll to section and update URL hash
+      document.querySelectorAll(".nav-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          const page = item.dataset.page;
+          scrollToSection(page);
+          window.location.hash = page;  // 更新URL hash
+        });
+      });
+
+      // 页面加载时检测URL hash，自动跳转到对应页面
+      window.addEventListener('load', function() {
+        let hash = window.location.hash.replace('#', '');
+        // 支持 #json 作为 #pdf 的别名（JSON提取页面）
+        if (hash === 'json') {
+          hash = 'pdf';
+        }
+        if (hash) {
+          setTimeout(() => {
+            scrollToSection(hash);
+            // 如果是JSON提取页面，自动加载列表
+            if (hash === 'pdf' && typeof loadJsonList === 'function') {
+              loadJsonList();
+            }
+          }, 500);  // 延迟确保页面渲染完成
+        }
+      });
+
+      // Scroll spy - highlight nav item based on scroll position
+      function setupScrollSpy() {
+        const sections = document.querySelectorAll(".page-section");
+        const contentArea = document.getElementById("contentArea");
+
+        contentArea.addEventListener("scroll", () => {
+          let currentSection = "dashboard";
+          const scrollTop = contentArea.scrollTop;
+
+          sections.forEach((section) => {
+            const offsetTop = section.offsetTop - 100;
+            if (scrollTop >= offsetTop) {
+              currentSection = section.id.replace("section-", "");
+            }
+          });
+
+          updateActiveNav(currentSection);
+        });
+      }
+
+      // ========== Utility Functions ==========
+      let logCount = 0;
+      let logDrawerOpen = false;
+
+      function appendLog(message, type = "info") {
+        const logArea = document.getElementById("logArea");
+        const entry = document.createElement("div");
+        entry.className = `log-entry ${type}`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        logArea.appendChild(entry);
+        logArea.scrollTop = logArea.scrollHeight;
+
+        // Update count
+        logCount++;
+        document.getElementById("logCount").textContent = `${logCount} 条日志`;
+      }
+
+      function clearLog() {
+        document.getElementById("logArea").innerHTML = "";
+        logCount = 0;
+        document.getElementById("logCount").textContent = "0 条日志";
+      }
+
+      // 🔥 加载历史日志（页面刷新后恢复）
+      let lastLogTimestamp = null;
+      let logPollInterval = null;
+
+      async function loadHistoryLogs() {
+        try {
+          const response = await fetch("/api/collect/logs?limit=200");
+          const data = await response.json();
+
+          if (data.success && data.messages && data.messages.length > 0) {
+            const logArea = document.getElementById("logArea");
+            logArea.innerHTML = ""; // 清空当前日志
+            logCount = 0;
+            
+            // 渲染所有历史日志
+            renderLogs(data.messages);
+            
+            // 记录最后一条日志的时间戳
+            const lastMsg = data.messages[data.messages.length - 1];
+            if (lastMsg && lastMsg.timestamp) {
+              lastLogTimestamp = lastMsg.timestamp;
+            }
+
+            // 显示会话状态提示
+            if (data.active_session) {
+              if (data.is_running) {
+                appendLog(
+                  `🔄 采集进行中，会话: ${data.active_session}`,
+                  "warning"
+                );
+              } else {
+                appendLog(
+                  `📋 已加载历史会话 ${data.active_session} 的日志`,
+                  "info"
+                );
+              }
+            }
+          }
+          
+          // 🔥 启动实时轮询
+          startLogPolling();
+          
+        } catch (error) {
+          console.error("加载历史日志失败:", error);
+        }
+      }
+
+      // 🔥 启动日志轮询
+      function startLogPolling() {
+        if (logPollInterval) clearInterval(logPollInterval);
+        logPollInterval = setInterval(updateLogs, 2000); // 每2秒轮询一次
+      }
+
+      function stopLogPolling() {
+        if (logPollInterval) {
+          clearInterval(logPollInterval);
+          logPollInterval = null;
+        }
+      }
+
+      // 🔥 增量更新日志
+      async function updateLogs() {
+        try {
+          let url = "/api/collect/logs?limit=100";
+          if (lastLogTimestamp) {
+            url += `&since=${encodeURIComponent(lastLogTimestamp)}`;
+          }
+          
+          const response = await fetch(url);
+          const data = await response.json();
+
+          if (data.success && data.messages && data.messages.length > 0) {
+            renderLogs(data.messages);
+            
+            // 更新最后时间戳
+            const lastMsg = data.messages[data.messages.length - 1];
+            if (lastMsg && lastMsg.timestamp) {
+              lastLogTimestamp = lastMsg.timestamp;
+            }
+          }
+        } catch (error) {
+          console.error("更新日志失败:", error);
+        }
+      }
+
+      // 渲染日志列表
+      function renderLogs(messages) {
+        const logArea = document.getElementById("logArea");
+        
+        messages.forEach((msg) => {
+          const entry = document.createElement("div");
+          let type = "info";
+          let text = msg.message || "";
+
+          // 根据消息类型设置样式
+          if (msg.type === "error" || msg.type === "match_failed") {
+            type = "error";
+          } else if (
+            msg.type === "success" ||
+            msg.type === "match_success" ||
+            msg.type === "complete"
+          ) {
+            type = "success";
+          } else if (msg.type === "warning") {
+            type = "warning";
+          }
+
+          // 构造显示文本
+          if (msg.type === "match_success") {
+            text = `✅ ${msg.label || "比赛"} - 采集成功 (${
+              msg.rows || 0
+            }行)`;
+          } else if (msg.type === "match_failed") {
+            text = `❌ ${msg.label || "比赛"} - ${msg.error || "采集失败"}`;
+          } else if (msg.type === "match_skip") {
+            text = `⏭️ ${msg.label || "比赛"} - ${msg.reason || "已跳过"}`;
+          } else if (msg.type === "phase") {
+            text = `📌 ${msg.message}`;
+          } else if (msg.type === "date_start") {
+            text = `📅 开始处理日期: ${msg.date} (${msg.total || 0}场)`;
+          } else if (msg.type === "date_complete") {
+            text = `✅ 日期完成: ${msg.date}`;
+          } else if (msg.message) {
+            text = msg.message;
+          }
+
+          // 格式化时间
+          let timeStr = "";
+          if (msg.timestamp) {
+            const date = new Date(msg.timestamp);
+            timeStr = date.toLocaleTimeString();
+          }
+
+          entry.className = `log-entry ${type}`;
+          entry.textContent = `[${timeStr}] ${text}`;
+          logArea.appendChild(entry);
+          logCount++;
+        });
+
+        document.getElementById(
+          "logCount"
+        ).textContent = `${logCount} 条日志`;
+        logArea.scrollTop = logArea.scrollHeight;
+      }
+
+      function toggleLogDrawer() {
+        if (logDrawerOpen) {
+          closeLogDrawer();
+        } else {
+          openLogDrawer();
+        }
+      }
+
+      function openLogDrawer() {
+        document.getElementById("logDrawer").classList.add("open");
+        logDrawerOpen = true;
+      }
+
+      function closeLogDrawer() {
+        const drawer = document.getElementById("logDrawer");
+        if (drawer) {
+          drawer.classList.remove("open");
+        }
+        logDrawerOpen = false;
+      }
+
+      // 🔥 滑动/拖拽关闭日志抽屉（支持触摸和鼠标）
+      (function initLogDrawerSwipe() {
+        const drawer = document.getElementById("logDrawer");
+        if (!drawer) return;
+        
+        let startX = 0;
+        let startY = 0;
+        let isDragging = false;
+        
+        // 触摸事件
+        drawer.addEventListener("touchstart", function(e) {
+          startX = e.changedTouches[0].screenX;
+          startY = e.changedTouches[0].screenY;
+        }, { passive: true });
+        
+        drawer.addEventListener("touchend", function(e) {
+          const endX = e.changedTouches[0].screenX;
+          const endY = e.changedTouches[0].screenY;
+          handleSwipe(endX - startX, Math.abs(endY - startY));
+        }, { passive: true });
+        
+        // 鼠标事件（PC端拖拽）
+        drawer.addEventListener("mousedown", function(e) {
+          startX = e.screenX;
+          startY = e.screenY;
+          isDragging = true;
+        });
+        
+        document.addEventListener("mouseup", function(e) {
+          if (isDragging) {
+            const endX = e.screenX;
+            const endY = e.screenY;
+            handleSwipe(endX - startX, Math.abs(endY - startY));
+            isDragging = false;
+          }
+        });
+        
+        function handleSwipe(diffX, diffY) {
+          // 向右滑动超过 60px 且水平滑动大于垂直滑动，关闭抽屉
+          if (diffX > 60 && diffX > diffY && logDrawerOpen) {
+            closeLogDrawer();
+          }
+        }
+      })();
+
+      function formatHandicap(value) {
+        if (value === null || value === undefined) return "N/A";
+        const num = parseFloat(value);
+        if (isNaN(num)) return "N/A";
+        if (num === 0) return "0";
+        return num > 0 ? `+${num}` : `${num}`;
+      }
+
+      function formatVolume(volume) {
+        if (!volume) return "0";
+        return parseFloat(volume).toLocaleString("zh-CN");
+      }
+
+      // ========== Dashboard Stats ==========
+      async function loadDashboardStats() {
+        // 🆕 加载今日比赛数量（带超时）
+        try {
+          appendLog("正在获取场次列表...");
+          const matchResp = await fetchWithTimeout("/api/bifaw/matches", {}, 8000);
+          const matchData = await matchResp.json();
+          if (matchData.success) {
+            const todayCount = matchData.matches?.length || 0;
+            document.getElementById("statTodayMatches").textContent =
+              todayCount;
+            appendLog(`✅ 获取到 ${todayCount} 场比赛`);
+          }
+        } catch (error) {
+          console.log("加载今日比赛失败:", error);
+          document.getElementById("statTodayMatches").textContent = "--";
+        }
+
+        // 加载缓存概览统计（带超时）
+        try {
+          const cacheResp = await fetchWithTimeout("/api/cache/overview", {}, 8000);
+          const cacheData = await cacheResp.json();
+          if (cacheData.success) {
+            document.getElementById("statCachedData").textContent =
+              cacheData.total_matches || 0;
+          }
+        } catch (error) {
+          console.log("加载缓存统计失败:", error);
+          document.getElementById("statCachedData").textContent = "--";
+        }
+
+        // 加载定时任务状态（带超时）
+        try {
+          const schedulerResp = await fetchWithTimeout("/api/scheduler/status", {}, 5000);
+          const schedulerData = await schedulerResp.json();
+          if (schedulerData.running) {
+            document.getElementById("statSchedulerStatus").textContent =
+              "运行中";
+            document.getElementById("statSchedulerStatus").className =
+              "stat-value success";
+          } else {
+            document.getElementById("statSchedulerStatus").textContent =
+              "已停止";
+            document.getElementById("statSchedulerStatus").className =
+              "stat-value warning";
+          }
+        } catch (error) {
+          console.log("加载定时任务状态失败:", error);
+          document.getElementById("statSchedulerStatus").textContent = "--";
+        }
+
+        // 加载回测胜率统计（从localStorage）
+        loadBacktestWinRate();
+      }
+
+      // 回测胜率统计
+      function loadBacktestWinRate() {
+        const stats = JSON.parse(localStorage.getItem("backtestStats") || "{}");
+        if (stats.total > 0) {
+          const winRate = ((stats.wins / stats.total) * 100).toFixed(1);
+          document.getElementById(
+            "statLastBacktest"
+          ).textContent = `${winRate}%`;
+          document.getElementById("statLastBacktest").className =
+            parseFloat(winRate) >= 60
+              ? "stat-value success"
+              : parseFloat(winRate) >= 50
+              ? "stat-value warning"
+              : "stat-value danger";
+        }
+      }
+
+      function updateBacktestStats(wins, total) {
+        const stats = { wins, total, lastUpdate: new Date().toISOString() };
+        localStorage.setItem("backtestStats", JSON.stringify(stats));
+        loadBacktestWinRate();
+      }
+
+      // ========== 带超时的 fetch ==========
+      async function fetchWithTimeout(url, options = {}, timeout = 10000) {
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), timeout);
+        try {
+          const resp = await fetch(url, { ...options, signal: controller.signal });
+          clearTimeout(timeoutId);
+          return resp;
+        } catch (error) {
+          clearTimeout(timeoutId);
+          if (error.name === 'AbortError') {
+            throw new Error('请求超时');
+          }
+          throw error;
+        }
+      }
+
+      // ========== Status ==========
+      async function refreshStatus() {
+        appendLog("正在验证登录状态...");
+        try {
+          // 使用 verify=true 进行实际验证
+          const resp = await fetchWithTimeout("/api/bifaw/status?verify=true", {}, 30000);
+          const data = await resp.json();
+          const statusDot = document.getElementById("statusDot");
+          const statusText = document.getElementById("statusText");
+
+          statusText.textContent = data.message || "未知状态";
+          
+          // 根据 valid 状态设置颜色
+          statusDot.classList.remove("online", "offline", "warning");
+          if (data.valid === true) {
+            statusDot.classList.add("online");
+          } else if (data.valid === false) {
+            statusDot.classList.add("offline");
+          } else {
+            statusDot.classList.add("warning");
+          }
+
+          // Show/hide login card
+          const needLogin = !data.exists || data.valid === false;
+          document.getElementById("loginCard").style.display = needLogin ? "block" : "none";
+
+          // Log feedback
+          if (data.valid === true) {
+            appendLog(`✅ ${data.message}`, "success");
+            loadMatches();
+          } else if (data.valid === false) {
+            appendLog(`❌ ${data.message}`, "error");
+          } else if (data.exists) {
+            appendLog(`⚠️ ${data.message}`, "warning");
+            loadMatches();
+          } else {
+            appendLog(`⚠️ ${data.message}`, "warning");
+          }
+        } catch (error) {
+          const statusText = document.getElementById("statusText");
+          statusText.textContent = "连接超时";
+          appendLog(`❌ 验证登录状态失败：${error}`, "error");
+        }
+      }
+
+      document
+        .getElementById("refreshStatusBtn")
+        .addEventListener("click", refreshStatus);
+      document.getElementById("quickLoginBtn").addEventListener("click", () => {
+        const loginCard = document.getElementById("loginCard");
+        loginCard.style.display =
+          loginCard.style.display === "none" ? "block" : "none";
+      });
+
+      // ========== Login ==========
+      document
+        .getElementById("fetchCaptchaBtn")
+        .addEventListener("click", async () => {
+          const btn = document.getElementById("fetchCaptchaBtn");
+          btn.disabled = true;
+          appendLog("正在获取验证码...");
+
+          try {
+            const resp = await fetch("/api/bifaw/captcha", { method: "POST" });
+            const data = await resp.json();
+
+            if (data.success) {
+              currentSession = data.session_id;
+              const img = document.getElementById("captchaImage");
+              img.src = `data:image/png;base64,${data.captcha}`;
+              img.style.display = "block";
+              document.getElementById("submitCaptchaBtn").disabled = false;
+              appendLog("验证码已生成，请输入后提交。");
+            } else {
+              appendLog(`获取验证码失败：${data.message}`, "error");
+            }
+          } catch (error) {
+            appendLog(`请求异常：${error}`, "error");
+          } finally {
+            btn.disabled = false;
+          }
+        });
+
+      document
+        .getElementById("submitCaptchaBtn")
+        .addEventListener("click", async () => {
+          if (!currentSession) {
+            appendLog("请先获取验证码。", "warning");
+            return;
+          }
+
+          const captcha = document.getElementById("captchaInput").value.trim();
+          if (!captcha) {
+            appendLog("验证码不能为空。", "warning");
+            return;
+          }
+
+          const btn = document.getElementById("submitCaptchaBtn");
+          btn.disabled = true;
+          appendLog("正在提交验证码...");
+
+          try {
+            const resp = await fetch("/api/bifaw/login", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ session_id: currentSession, captcha }),
+            });
+            const data = await resp.json();
+
+            if (data.success) {
+              appendLog(data.message || "登录成功！", "success");
+              document.getElementById("captchaImage").style.display = "none";
+              document.getElementById("captchaInput").value = "";
+              currentSession = null;
+              await refreshStatus();
+            } else {
+              appendLog(data.message || "登录失败。", "error");
+              if (data.captcha) {
+                document.getElementById(
+                  "captchaImage"
+                ).src = `data:image/png;base64,${data.captcha}`;
+              }
+            }
+          } catch (error) {
+            appendLog(`提交异常：${error}`, "error");
+          } finally {
+            btn.disabled = false;
+          }
+        });
+
+      // ========== Finished Matches ==========
+      async function loadFinishedMatches() {
+        // 🔥 使用新的日期选择器（开始日期）
+        const dateValue = document.getElementById("rangeStartDate").value;
+        if (!dateValue) {
+          appendLog("请选择查询日期。", "warning");
+          return;
+        }
+
+        // 🔥 不再过滤盘口，SB有数据的就是主盘口
+        const filterByHandicap = false;
+        const btn = document.getElementById("queryFinishedBtn");
+        btn.disabled = true;
+        btn.textContent = "查询中...";
+
+        appendLog(`正在查询 ${dateValue} 的完场比赛...`);
+
+        try {
+          const resp = await fetch("/api/bifaw/finished_matches", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              date: dateValue,
+              rows: 200,
+              filter_by_handicap: filterByHandicap,
+            }),
+          });
+          const data = await resp.json();
+
+          if (data.success) {
+            appendLog(`✅ 找到 ${data.count} 场比赛`, "success");
+            finishedMatchesData = data.matches || [];
+            renderFinishedMatchList(finishedMatchesData);
+            document.getElementById("batchCollectBtn").disabled = false;
+          } else {
+            appendLog(`❌ ${data.message}`, "error");
+            renderFinishedMatchList([]);
+          }
+        } catch (error) {
+          appendLog(`查询异常：${error}`, "error");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "🔍 查询比赛";
+        }
+      }
+
+      function renderFinishedMatchList(matches) {
+        const container = document.getElementById("finishedMatchList");
+
+        if (!matches || matches.length === 0) {
+          container.innerHTML =
+            '<div class="empty-state"><div class="icon">📅</div><p>没有符合条件的比赛</p></div>';
+          return;
+        }
+
+        container.innerHTML = matches
+          .map(
+            (match) => `
+        <div class="match-item">
+          <div class="match-info">
+            <div>
+              <span class="match-league">${match.league || "未知联赛"}</span>
+              <span class="match-time">${match.kickoff || ""}</span>
+            </div>
+            <div class="match-teams">
+              <span class="match-team">${match.home || "主队"}</span>
+              <span class="match-score">${match.score || "-"}</span>
+              <span class="match-team">${match.away || "客队"}</span>
+            </div>
+            ${
+              match.handicap_preview
+                ? `<div class="match-handicap">✓ 盘口：${formatHandicap(
+                    match.handicap_preview.handicap
+                  )}</div>`
+                : ""
+            }
+          </div>
+          <div class="match-actions">
+            <button class="btn btn-sm btn-primary" onclick="generateRecommendation('${encodeURIComponent(
+              JSON.stringify(match)
+            )}')">🎯 生成推荐</button>
+            <button class="btn btn-sm btn-success" onclick="collectAndSaveJson('${encodeURIComponent(
+              JSON.stringify(match)
+            )}', this)">💾 保存JSON</button>
+          </div>
+        </div>
+      `
+          )
+          .join("");
+      }
+
+      document
+        .getElementById("queryFinishedBtn")
+        .addEventListener("click", loadFinishedMatches);
+
+      // ========== Recommendation ==========
+      async function generateRecommendation(matchJson) {
+        const match = JSON.parse(decodeURIComponent(matchJson));
+        appendLog(`🎯 正在生成推荐：${match.home} vs ${match.away}`);
+
+        try {
+          const resp = await fetch("/api/recommendation/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ match }),
+          });
+          const data = await resp.json();
+
+          if (data.success) {
+            appendLog(`✅ 推荐生成完成`, "success");
+            if (data.recommendation) {
+              appendLog(
+                `推荐结果：${JSON.stringify(data.recommendation, null, 2)}`,
+                "info"
+              );
+            }
+          } else {
+            appendLog(`❌ ${data.message}`, "error");
+          }
+        } catch (error) {
+          appendLog(`生成推荐失败：${error}`, "error");
+        }
+      }
+
+      // ========== 保存JSON（真实进度条）==========
+      async function collectAndSaveJson(matchJson, btnElement) {
+        const match = JSON.parse(decodeURIComponent(matchJson));
+        appendLog(`💾 正在采集并保存JSON：${match.home} vs ${match.away}`);
+
+        // 找到按钮并显示进度
+        const btn = btnElement || event.target;
+        const originalText = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '⏳ 采集中...';
+        
+        // 创建进度条
+        const progressContainer = document.createElement('div');
+        progressContainer.className = 'json-save-progress';
+        progressContainer.style.cssText = 'margin-top: 8px; width: 100%;';
+        progressContainer.innerHTML = `
+          <div style="background: #e0e0e0; border-radius: 4px; height: 6px; overflow: hidden;">
+            <div class="progress-bar" style="background: linear-gradient(90deg, #4CAF50, #8BC34A); height: 100%; width: 0%; transition: width 0.3s;"></div>
+          </div>
+          <div class="progress-text" style="font-size: 12px; color: #666; margin-top: 4px;">准备采集...</div>
+        `;
+        
+        // 插入进度条到按钮后面
+        const matchCard = btn.closest('.match-card') || btn.parentElement;
+        const existingProgress = matchCard.querySelector('.json-save-progress');
+        if (existingProgress) existingProgress.remove();
+        matchCard.appendChild(progressContainer);
+        
+        const progressBar = progressContainer.querySelector('.progress-bar');
+        const progressText = progressContainer.querySelector('.progress-text');
+
+        try {
+          // 1. 启动异步采集任务
+          const startResp = await fetch("/api/push/collect_json_async", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ match: match }),
+          });
+          const startData = await startResp.json();
+          
+          if (!startData.success) {
+            throw new Error(startData.error || '启动采集失败');
+          }
+          
+          const taskId = startData.task_id;
+          appendLog(`   任务ID: ${taskId}`, "info");
+          
+          // 2. 轮询查询真实进度
+          const pollProgress = async () => {
+            try {
+              const progressResp = await fetch(`/api/push/collect_progress/${taskId}`);
+              const progressData = await progressResp.json();
+              
+              if (!progressData.success) {
+                throw new Error(progressData.error || '查询进度失败');
+              }
+              
+              // 更新进度条
+              progressBar.style.width = progressData.progress + '%';
+              progressText.textContent = progressData.message;
+              
+              if (progressData.status === 'done') {
+                // 采集完成
+                progressBar.style.background = 'linear-gradient(90deg, #4CAF50, #8BC34A)';
+                
+                appendLog(`✅ JSON保存成功：${match.home} vs ${match.away}`, "success");
+                appendLog(`   文件：${progressData.result.filename}`, "info");
+                
+                btn.innerHTML = '✅ 已保存';
+                btn.style.background = '#4CAF50';
+                
+                // 3秒后恢复按钮
+                setTimeout(() => {
+                  btn.innerHTML = originalText;
+                  btn.disabled = false;
+                  btn.style.background = '';
+                  progressContainer.remove();
+                }, 3000);
+                
+                // 提示用户可以去JSON提取页面下载
+                if (confirm('JSON保存成功！是否跳转到JSON提取页面下载？')) {
+                  window.location.hash = 'json';
+                  scrollToSection('pdf');
+                  loadJsonList();
+                }
+                
+              } else if (progressData.status === 'error') {
+                // 采集失败
+                progressBar.style.background = '#f44336';
+                
+                appendLog(`❌ ${progressData.message}`, "error");
+                
+                btn.innerHTML = originalText;
+                btn.disabled = false;
+                
+                setTimeout(() => progressContainer.remove(), 5000);
+                
+              } else {
+                // 继续轮询
+                setTimeout(pollProgress, 500);
+              }
+              
+            } catch (pollError) {
+              progressBar.style.background = '#f44336';
+              progressText.textContent = '❌ 查询进度失败：' + pollError.message;
+              
+              btn.innerHTML = originalText;
+              btn.disabled = false;
+              
+              setTimeout(() => progressContainer.remove(), 5000);
+            }
+          };
+          
+          // 开始轮询
+          pollProgress();
+          
+        } catch (error) {
+          progressBar.style.background = '#f44336';
+          progressText.textContent = '❌ 采集失败：' + error.message;
+          
+          appendLog(`保存JSON失败：${error.message}`, "error");
+          
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+          
+          setTimeout(() => progressContainer.remove(), 5000);
+        }
+      }
+
+      // ========== Backtest ==========
+      async function startBatchBacktest() {
+        const startDate = document.getElementById("backtestDate").value;
+        if (!startDate) {
+          alert("请选择回测日期！");
+          return;
+        }
+
+        const btn = document.getElementById("startBacktestBtn");
+        btn.disabled = true;
+        btn.textContent = "⏳ 回测中...";
+
+        document
+          .getElementById("backtestProgressCard")
+          .classList.remove("hidden");
+        document.getElementById("backtestStatsCard").classList.remove("hidden");
+        document.getElementById("backtestLogCard").classList.remove("hidden");
+
+        const logContent = document.getElementById("backtestLogContent");
+        logContent.innerHTML = "";
+        addBacktestLog("info", "🔍 查询已完场比赛...");
+
+        try {
+          // Get match list
+          const listResp = await fetch(`/api/matches/list?date=${startDate}`);
+          const listData = await listResp.json();
+
+          if (!listData.success || !listData.matches?.length) {
+            addBacktestLog("error", "未找到比赛数据");
+            return;
+          }
+
+          addBacktestLog("success", `找到 ${listData.matches.length} 场比赛`);
+          updateBacktestProgress(10);
+
+          // Run backtest
+          const btResp = await fetch("/api/backtest/batch", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ matches: listData.matches }),
+          });
+          const btData = await btResp.json();
+          updateBacktestProgress(90);
+
+          if (btData.success) {
+            const stats = btData.statistics || {};
+            document.getElementById("btStatTotal").textContent =
+              stats.total || 0;
+            document.getElementById("btStatRecommended").textContent =
+              stats.recommended || 0;
+            document.getElementById("btStatWin").textContent = stats.win || 0;
+            document.getElementById("btStatLoss").textContent = stats.lose || 0;
+            document.getElementById("btStatWinRate").textContent =
+              (stats.win_rate || 0).toFixed(1) + "%";
+
+            updateBacktestProgress(100);
+            addBacktestLog(
+              "success",
+              `✅ 回测完成！胜率：${(stats.win_rate || 0).toFixed(1)}%`
+            );
+
+            // 更新仪表盘胜率统计
+            updateBacktestStats(stats.win || 0, stats.recommended || 0);
+          } else {
+            addBacktestLog("error", `回测失败: ${btData.message}`);
+          }
+        } catch (error) {
+          addBacktestLog("error", `请求失败: ${error.message}`);
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "🏁 开始批量回测";
+        }
+      }
+
+      function updateBacktestProgress(percent) {
+        const bar = document.getElementById("backtestProgressBar");
+        bar.style.width = percent + "%";
+        bar.textContent = percent + "%";
+      }
+
+      function addBacktestLog(type, message) {
+        const container = document.getElementById("backtestLogContent");
+        const entry = document.createElement("div");
+        entry.className = `log-entry ${type}`;
+        entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+        container.appendChild(entry);
+        container.scrollTop = container.scrollHeight;
+      }
+
+      document
+        .getElementById("startBacktestBtn")
+        .addEventListener("click", startBatchBacktest);
+
+      // ========== Push Tests ==========
+      async function testPush(type) {
+        const resultCard = document.getElementById("pushResultCard");
+        const resultContent = document.getElementById("pushTestResult");
+
+        resultCard.classList.remove("hidden");
+        resultContent.innerHTML = `<div class="animate-pulse">⏳ 正在测试${type}推送...</div>`;
+
+        try {
+          const resp = await fetch("/api/push/test", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type }),
+          });
+          const data = await resp.json();
+
+          if (data.success) {
+            resultContent.innerHTML = `<div class="alert alert-success">${data.message}</div>`;
+            appendLog(`✅ ${type}推送测试成功`, "success");
+          } else {
+            resultContent.innerHTML = `<div class="alert alert-danger">${data.message}</div>`;
+            appendLog(`❌ ${type}推送测试失败`, "error");
+          }
+        } catch (error) {
+          resultContent.innerHTML = `<div class="alert alert-danger">请求失败: ${error.message}</div>`;
+        }
+      }
+
+      document
+        .getElementById("testWeComPush")
+        .addEventListener("click", () => testPush("wecom"));
+      document
+        .getElementById("testTelegramPush")
+        .addEventListener("click", () => testPush("telegram"));
+      document
+        .getElementById("testAllPush")
+        .addEventListener("click", () => testPush("all"));
+
+      // ========== PDF Upload ==========
+      const uploadArea = document.getElementById("uploadArea");
+      const fileInput = document.getElementById("pdfFile");
+      const chooseBtn = document.getElementById("chooseFileBtn");
+      const fileNameDisplay = document.getElementById("fileName");
+
+      if (uploadArea && fileInput) {
+        uploadArea.addEventListener("click", (e) => {
+          if (e.target !== chooseBtn) fileInput.click();
+        });
+
+        chooseBtn?.addEventListener("click", (e) => {
+          e.stopPropagation();
+          fileInput.click();
+        });
+
+        fileInput.addEventListener("change", (e) => {
+          if (e.target.files.length > 0) {
+            fileNameDisplay.textContent = "📎 " + e.target.files[0].name;
+            fileNameDisplay.style.display = "block";
+          }
+        });
+
+        uploadArea.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          uploadArea.classList.add("dragover");
+        });
+
+        uploadArea.addEventListener("dragleave", () => {
+          uploadArea.classList.remove("dragover");
+        });
+
+        uploadArea.addEventListener("drop", (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove("dragover");
+          if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            fileNameDisplay.textContent = "📎 " + e.dataTransfer.files[0].name;
+            fileNameDisplay.style.display = "block";
+          }
+        });
+      }
+
+      // CSV Download
+      document
+        .getElementById("downloadCsv")
+        ?.addEventListener("click", function () {
+          const base64Data = this.dataset.csv;
+          const fileName = (this.dataset.filename || "解析结果.csv").replace(
+            /\.pdf$/i,
+            ".csv"
+          );
+          if (!base64Data) return;
+
+          const csvContent = atob(base64Data);
+          const blob = new Blob([csvContent], {
+            type: "text/csv;charset=utf-8;",
+          });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = fileName;
+          a.click();
+          URL.revokeObjectURL(url);
+        });
+
+      // ========== Modal Functions ==========
+      function closeSessionModal() {
+        document.getElementById("sessionModal").classList.remove("active");
+      }
+
+      function closeResumeModal() {
+        document.getElementById("resumeModal").classList.remove("active");
+      }
+
+      // 断点续传按钮已移除，功能已整合到历史会话中
+
+      function copySessionId() {
+        const sessionId =
+          document.getElementById("currentSessionId").textContent;
+        navigator.clipboard.writeText(sessionId);
+        appendLog("会话ID已复制到剪贴板", "success");
+      }
+
+      // ========== Date Range Collection ==========
+      document
+        .getElementById("startRangeCollectBtn")
+        ?.addEventListener("click", async () => {
+          const startDate = document.getElementById("rangeStartDate").value;
+          const filterByHandicap = document.getElementById(
+            "rangeFilterHandicap"
+          ).checked;
+
+          if (!startDate) {
+            appendLog("请选择开始日期", "warning");
+            return;
+          }
+
+          const btn = document.getElementById("startRangeCollectBtn");
+          btn.disabled = true;
+          btn.textContent = "采集中...";
+
+          // Show progress
+          document
+            .getElementById("collectProgressCard")
+            .classList.remove("hidden");
+          document.getElementById("collectPhase").textContent = "初始化";
+          document.getElementById("collectProgressBar").style.width = "0%";
+          document.getElementById("collectProgressBar").textContent = "0%";
+          document.getElementById("collectProgressDetail").textContent =
+            "准备开始采集...";
+
+          appendLog(`🚀 开始日期区间采集：${startDate} 至 昨天`);
+
+          try {
+            const eventSource = new EventSource(
+              `/api/collect/batch_range_stream?start_date=${startDate}&filter_by_handicap=${
+                filterByHandicap ? "1" : "0"
+              }`
+            );
+
+            eventSource.onmessage = (event) => {
+              try {
+                const data = JSON.parse(event.data);
+
+                switch (data.type) {
+                  case "phase":
+                    document.getElementById(
+                      "collectPhase"
+                    ).textContent = `阶段${data.phase}`;
+                    appendLog(data.message);
+                    break;
+                  case "scan":
+                    document.getElementById(
+                      "collectProgressDetail"
+                    ).textContent = `扫描日期：${data.date} (${data.day}/${data.total_days})`;
+                    break;
+                  case "scan_result":
+                    appendLog(`  ✓ ${data.date}: ${data.matches}场比赛`);
+                    break;
+                  case "scan_complete":
+                    appendLog(
+                      `✅ 扫描完成，共 ${data.total_matches} 场需要采集`
+                    );
+                    break;
+                  case "session_created":
+                    document
+                      .getElementById("sessionInfo")
+                      .classList.remove("hidden");
+                    document.getElementById("currentSessionId").textContent =
+                      data.session_id;
+                    appendLog(`📝 会话ID: ${data.session_id}`);
+                    break;
+                  case "day_start":
+                    // 🆕 显示当天开始采集
+                    appendLog(`📅 ${data.date} 开始采集 (${data.matches}场)`);
+                    document.getElementById(
+                      "collectProgressDetail"
+                    ).textContent = `${data.date} (0/${data.matches})`;
+                    break;
+                  case "match_start":
+                    // 🆕 显示正在采集的比赛
+                    document.getElementById(
+                      "collectProgressDetail"
+                    ).textContent = `正在采集: ${data.label || "未知"}`;
+                    break;
+                  case "match_success":
+                    // 🆕 采集成功
+                    const pctSuccess = Math.round(
+                      (data.current / data.total) * 100
+                    );
+                    document.getElementById("collectProgressBar").style.width =
+                      pctSuccess + "%";
+                    document.getElementById("collectProgressBar").textContent =
+                      pctSuccess + "%";
+                    document.getElementById(
+                      "collectProgressDetail"
+                    ).textContent = `采集进度：${data.current}/${data.total}`;
+                    appendLog(`  ✅ ${data.label}`, "success");
+                    break;
+                  case "match_failed":
+                    // 🆕 采集失败
+                    const pctFailed = Math.round(
+                      (data.current / data.total) * 100
+                    );
+                    document.getElementById("collectProgressBar").style.width =
+                      pctFailed + "%";
+                    document.getElementById("collectProgressBar").textContent =
+                      pctFailed + "%";
+                    appendLog(
+                      `  ❌ ${data.label}: ${data.error || "失败"}`,
+                      "error"
+                    );
+                    break;
+                  case "match_skip":
+                    // 🆕 跳过比赛
+                    appendLog(`  ⏭️ ${data.label} (${data.reason})`);
+                    break;
+                  case "match_progress":
+                    const percent = data.percent || 0;
+                    document.getElementById("collectProgressBar").style.width =
+                      percent + "%";
+                    document.getElementById("collectProgressBar").textContent =
+                      percent + "%";
+                    document.getElementById(
+                      "collectProgressDetail"
+                    ).textContent = `采集进度：${data.current}/${data.total}`;
+                    break;
+                  case "day_complete":
+                    appendLog(
+                      `  ✓ ${data.date} 完成 (成功:${data.collected} 失败:${data.failed})`
+                    );
+                    break;
+                  case "complete":
+                    appendLog(
+                      `🎉 采集完成！成功:${data.total_collected} 失败:${data.total_failed} 跳过:${data.total_skipped}`,
+                      "success"
+                    );
+                    document.getElementById("collectProgressBar").style.width =
+                      "100%";
+                    document.getElementById("collectProgressBar").textContent =
+                      "100%";
+                    document.getElementById("collectPhase").textContent =
+                      "完成";
+                    eventSource.close();
+                    btn.disabled = false;
+                    btn.textContent = "🚀 开始采集";
+                    break;
+                  case "error":
+                    appendLog(`❌ ${data.message}`, "error");
+                    eventSource.close();
+                    btn.disabled = false;
+                    btn.textContent = "🚀 开始采集";
+                    break;
+                }
+              } catch (e) {
+                console.error("Parse error:", e);
+              }
+            };
+
+            eventSource.onerror = () => {
+              appendLog("连接中断", "error");
+              eventSource.close();
+              btn.disabled = false;
+              btn.textContent = "🚀 开始采集";
+            };
+          } catch (error) {
+            appendLog(`采集失败：${error}`, "error");
+            btn.disabled = false;
+            btn.textContent = "🚀 开始采集";
+          }
+        });
+
+      // ⚡ 并发日期区间采集 - 使用后台任务模式
+      document
+        .getElementById("startRangeConcurrentBtn")
+        ?.addEventListener("click", startBackgroundCollect);
+
+      // 🐌 串行采集按钮 - 一场一场采集，适合低配置服务器
+      document
+        .getElementById("startSerialCollectBtn")
+        ?.addEventListener("click", startSerialCollect);
+
+      // 保留原来的 SSE 模式代码（备用，暂不使用）
+      function _startRangeConcurrentCollectSSE() {
+          const startDate = document.getElementById("rangeStartDate").value;
+          const filterByHandicap = document.getElementById(
+            "rangeFilterHandicap"
+          ).checked;
+
+          if (!startDate) {
+            appendLog("请选择开始日期", "warning");
+            return;
+          }
+
+          const btn = document.getElementById("startRangeConcurrentBtn");
+          btn.disabled = true;
+          btn.textContent = "并发中...";
+
+          document
+            .getElementById("collectProgressCard")
+            .classList.remove("hidden");
+          document.getElementById("collectPhase").textContent = "初始化";
+          document.getElementById("collectProgressBar").style.width = "0%";
+          document.getElementById("collectProgressBar").style.background =
+            "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)";
+          document.getElementById("collectProgressDetail").textContent =
+            "准备开始并发采集...";
+
+          appendLog(`⚡ 开始并发日期区间采集：${startDate} 至 昨天（3并发）`);
+
+          try {
+            const eventSource = new EventSource(
+              `/api/collect/batch_range_stream?start_date=${startDate}&filter_by_handicap=${
+                filterByHandicap ? "1" : "0"
+              }&workers=3`
+            );
+
+            eventSource.onmessage = (event) => {
+              try {
+                const data = JSON.parse(event.data);
+                switch (data.type) {
+                  case "phase":
+                    document.getElementById(
+                      "collectPhase"
+                    ).textContent = `阶段${data.phase}`;
+                    appendLog(data.message);
+                    break;
+                  case "scan":
+                    document.getElementById(
+                      "collectProgressDetail"
+                    ).textContent = `扫描日期：${data.date} (${data.day}/${data.total_days})`;
+                    break;
+                  case "scan_result":
+                    appendLog(`  ✓ ${data.date}: ${data.matches}场比赛`);
+                    break;
+                  case "scan_complete":
+                    appendLog(
+                      `✅ 扫描完成，共 ${data.total_matches} 场需要采集`
+                    );
+                    break;
+                  case "session_created":
+                    document
+                      .getElementById("sessionInfo")
+                      .classList.remove("hidden");
+                    document.getElementById("currentSessionId").textContent =
+                      data.session_id;
+                    appendLog(`📝 会话ID: ${data.session_id}`);
+                    break;
+                  case "day_start":
+                    // 🆕 显示当天开始采集
+                    appendLog(`📅 ${data.date} 开始采集 (${data.matches}场)`);
+                    document.getElementById(
+                      "collectProgressDetail"
+                    ).textContent = `${data.date} (0/${data.matches})`;
+                    break;
+                  case "match_start":
+                    // 🆕 显示正在采集的比赛
+                    document.getElementById(
+                      "collectProgressDetail"
+                    ).textContent = `正在采集: ${data.label || "未知"}`;
+                    break;
+                  case "match_success":
+                    // 🆕 采集成功
+                    const pctSuccess2 = Math.round(
+                      (data.current / data.total) * 100
+                    );
+                    document.getElementById("collectProgressBar").style.width =
+                      pctSuccess2 + "%";
+                    document.getElementById("collectProgressBar").textContent =
+                      pctSuccess2 + "%";
+                    document.getElementById(
+                      "collectProgressDetail"
+                    ).textContent = `采集进度：${data.current}/${data.total}`;
+                    appendLog(`  ✅ ${data.label}`, "success");
+                    break;
+                  case "match_failed":
+                    // 🆕 采集失败
+                    const pctFailed2 = Math.round(
+                      (data.current / data.total) * 100
+                    );
+                    document.getElementById("collectProgressBar").style.width =
+                      pctFailed2 + "%";
+                    document.getElementById("collectProgressBar").textContent =
+                      pctFailed2 + "%";
+                    appendLog(
+                      `  ❌ ${data.label}: ${data.error || "失败"}`,
+                      "error"
+                    );
+                    break;
+                  case "match_skip":
+                    // 🆕 跳过比赛
+                    appendLog(`  ⏭️ ${data.label} (${data.reason})`);
+                    break;
+                  case "match_progress":
+                    const percent = data.percent || 0;
+                    document.getElementById("collectProgressBar").style.width =
+                      percent + "%";
+                    document.getElementById("collectProgressBar").textContent =
+                      percent + "%";
+                    let detailText = `采集进度：${data.current}/${data.total}`;
+                    if (data.speed) detailText += ` | ${data.speed}场/分钟`;
+                    if (data.eta) detailText += ` | 剩余${data.eta}`;
+                    document.getElementById(
+                      "collectProgressDetail"
+                    ).textContent = detailText;
+                    break;
+                  case "day_complete":
+                    appendLog(
+                      `  ✓ ${data.date} 完成 (成功:${data.collected} 失败:${data.failed})`
+                    );
+                    break;
+                  case "complete":
+                    appendLog(
+                      `🎉 并发采集完成！成功:${data.total_collected} 失败:${data.total_failed} 跳过:${data.total_skipped}`,
+                      "success"
+                    );
+                    document.getElementById("collectProgressBar").style.width =
+                      "100%";
+                    document.getElementById("collectProgressBar").textContent =
+                      "100%";
+                    document.getElementById("collectPhase").textContent =
+                      "完成";
+                    eventSource.close();
+                    btn.disabled = false;
+                    btn.textContent = "⚡ 并发采集";
+                    break;
+                  case "error":
+                    appendLog(`❌ ${data.message}`, "error");
+                    eventSource.close();
+                    btn.disabled = false;
+                    btn.textContent = "⚡ 并发采集";
+                    break;
+                }
+              } catch (e) {
+                console.error("Parse error:", e);
+              }
+            };
+
+            eventSource.onerror = () => {
+              appendLog("连接中断", "error");
+              eventSource.close();
+              btn.disabled = false;
+              btn.textContent = "⚡ 并发采集";
+            };
+          } catch (error) {
+            appendLog(`并发采集失败：${error}`, "error");
+            btn.disabled = false;
+            btn.textContent = "⚡ 并发采集";
+          }
+      }
+
+      // ========== Batch Collect ==========
+      // 🆕 每场比赛状态渲染函数
+      function renderMatchStatus(matchDetails) {
+        const matchStatusList = document.getElementById("matchStatusList");
+        if (!matchDetails || matchDetails.length === 0) {
+          matchStatusList.innerHTML = "";
+          return;
+        }
+        const statusIcons = {
+          pending: "⏳",
+          collecting: "🔄",
+          success: "✅",
+          failed: "❌",
+          skipped: "⏭️",
+        };
+        const statusColors = {
+          pending: "#9ca3af",
+          collecting: "#f59e0b",
+          success: "#10b981",
+          failed: "#ef4444",
+          skipped: "#6366f1",
+        };
+        matchStatusList.innerHTML = matchDetails
+          .map(
+            (m) => `
+          <div style="display:flex;align-items:center;padding:8px 12px;border-bottom:1px solid var(--color-border);background:${
+            m.status === "collecting" ? "rgba(245,158,11,0.1)" : "transparent"
+          };">
+            <div style="width:24px;font-size:14px;">${
+              statusIcons[m.status] || "❓"
+            }</div>
+            <div style="flex:1;min-width:0;margin-left:8px;">
+              <div style="font-size:0.85em;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${
+                m.match
+              }</div>
+              <div style="font-size:0.75em;color:var(--color-text-muted);">${
+                m.league || ""
+              } ${m.kickoff ? m.kickoff.split(" ")[1] || "" : ""}</div>
+            </div>
+            <div style="font-size:0.75em;padding:2px 8px;border-radius:999px;background:${
+              statusColors[m.status]
+            }20;color:${statusColors[m.status]};font-weight:500;">${
+              m.message
+            }</div>
+          </div>
+        `
+          )
+          .join("");
+        const collectingIdx = matchDetails.findIndex(
+          (m) => m.status === "collecting"
+        );
+        if (collectingIdx > 0)
+          matchStatusList.scrollTop = Math.max(0, collectingIdx * 50 - 100);
+      }
+
+      // 🆕 进度轮询函数
+      function startProgressPolling(
+        progressBar,
+        progressDetail,
+        errorListDiv,
+        errorCountSpan,
+        errorListContent
+      ) {
+        return setInterval(async () => {
+          try {
+            const resp = await fetch("/api/collect/progress");
+            const progress = await resp.json();
+            if (progress.active) {
+              const percent =
+                progress.total > 0
+                  ? Math.floor((progress.processed / progress.total) * 100)
+                  : 0;
+              progressBar.style.width = `${percent}%`;
+              progressBar.textContent = `${percent}%`;
+              let detailText = `${progress.processed}/${progress.total}场 (成功:${progress.success} 失败:${progress.failed})`;
+              if (progress.speed > 0)
+                detailText += ` | ${progress.speed}场/分钟`;
+              if (progress.eta_seconds > 0) {
+                const etaMin = Math.floor(progress.eta_seconds / 60);
+                const etaSec = progress.eta_seconds % 60;
+                detailText += ` | 剩余${etaMin}分${etaSec}秒`;
+              }
+              progressDetail.textContent = detailText;
+              if (progress.match_details)
+                renderMatchStatus(progress.match_details);
+              if (progress.error_details && progress.error_details.length > 0) {
+                errorListDiv.classList.remove("hidden");
+                errorCountSpan.textContent = progress.error_details.length;
+                errorListContent.innerHTML = progress.error_details
+                  .map(
+                    (err) =>
+                      `<div style="margin-bottom:4px;">[${err.timestamp}] ${err.match}: ${err.reason}</div>`
+                  )
+                  .join("");
+              }
+            }
+          } catch (e) {
+            console.error("获取进度失败", e);
+          }
+        }, 1000);
+      }
+
+      document
+        .getElementById("batchCollectBtn")
+        ?.addEventListener("click", async () => {
+          if (finishedMatchesData.length === 0) {
+            appendLog("请先查询完场比赛", "warning");
+            return;
+          }
+
+          const btn = document.getElementById("batchCollectBtn");
+          btn.disabled = true;
+          btn.textContent = "采集中...";
+
+          const progressCard = document.getElementById("collectProgressCard");
+          const progressBar = document.getElementById("collectProgressBar");
+          const progressDetail = document.getElementById(
+            "collectProgressDetail"
+          );
+          const errorListDiv = document.getElementById("collectErrorList");
+          const errorCountSpan = document.getElementById("errorCount");
+          const errorListContent = document.getElementById("errorListContent");
+
+          progressCard.classList.remove("hidden");
+          progressBar.style.width = "0%";
+          appendLog(`🔄 开始批量采集 ${finishedMatchesData.length} 场比赛...`);
+
+          const progressInterval = startProgressPolling(
+            progressBar,
+            progressDetail,
+            errorListDiv,
+            errorCountSpan,
+            errorListContent
+          );
+
+          try {
+            const resp = await fetch("/api/collect/batch", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                matches: finishedMatchesData.map((m) => ({
+                  home: m.home,
+                  away: m.away,
+                  league: m.league,
+                  kickoff: m.kickoff,
+                  label:
+                    m.label ||
+                    `${m.kickoff} ${m.league} ${m.home} vs ${m.away}`,
+                  detail_url: m.detail_url,
+                  detail_params: m.detail_params,
+                  score: m.score,
+                })),
+              }),
+            });
+            clearInterval(progressInterval);
+            const data = await resp.json();
+
+            if (data.success) {
+              progressBar.style.width = "100%";
+              progressBar.textContent = "100%";
+              appendLog(
+                `✅ 采集完成：成功 ${data.success_count}/${data.total} 场`,
+                "success"
+              );
+            } else {
+              appendLog(`❌ ${data.message}`, "error");
+            }
+          } catch (error) {
+            clearInterval(progressInterval);
+            appendLog(`采集失败：${error}`, "error");
+          } finally {
+            btn.disabled = false;
+            btn.textContent = "📥 采集";
+          }
+        });
+
+      // 🚀 并发采集按钮
+      document
+        .getElementById("batchCollectConcurrentBtn")
+        ?.addEventListener("click", async () => {
+          if (finishedMatchesData.length === 0) {
+            appendLog("请先查询完场比赛", "warning");
+            return;
+          }
+
+          const btn = document.getElementById("batchCollectConcurrentBtn");
+          btn.disabled = true;
+          btn.textContent = "并发中...";
+
+          const progressCard = document.getElementById("collectProgressCard");
+          const progressBar = document.getElementById("collectProgressBar");
+          const progressDetail = document.getElementById(
+            "collectProgressDetail"
+          );
+          const errorListDiv = document.getElementById("collectErrorList");
+          const errorCountSpan = document.getElementById("errorCount");
+          const errorListContent = document.getElementById("errorListContent");
+
+          progressCard.classList.remove("hidden");
+          progressBar.style.width = "0%";
+          progressBar.style.background =
+            "linear-gradient(90deg, #ef4444 0%, #dc2626 100%)";
+          appendLog(
+            `🚀 开始并发采集 ${finishedMatchesData.length} 场比赛（3并发）...`
+          );
+
+          const progressInterval = startProgressPolling(
+            progressBar,
+            progressDetail,
+            errorListDiv,
+            errorCountSpan,
+            errorListContent
+          );
+
+          try {
+            const resp = await fetch("/api/collect/batch_concurrent", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                matches: finishedMatchesData.map((m) => ({
+                  home: m.home,
+                  away: m.away,
+                  league: m.league,
+                  kickoff: m.kickoff,
+                  label:
+                    m.label ||
+                    `${m.kickoff} ${m.league} ${m.home} vs ${m.away}`,
+                  detail_url: m.detail_url,
+                  detail_params: m.detail_params,
+                  score: m.score,
+                })),
+                workers: 3,
+              }),
+            });
+            clearInterval(progressInterval);
+            const data = await resp.json();
+
+            if (data.success) {
+              progressBar.style.width = "100%";
+              progressBar.textContent = "100%";
+              appendLog(
+                `🚀 并发采集完成：成功 ${data.success_count}/${data.total} 场（${data.workers}并发）`,
+                "success"
+              );
+            } else {
+              appendLog(`❌ ${data.message}`, "error");
+            }
+          } catch (error) {
+            clearInterval(progressInterval);
+            appendLog(`并发采集失败：${error}`, "error");
+          } finally {
+            btn.disabled = false;
+            btn.textContent = "🚀 并发采集";
+          }
+        });
+
+      // ========== Load Matches (Recommendation) ==========
+      async function loadMatches(forceRefresh = false) {
+        appendLog(forceRefresh ? "正在刷新场次列表..." : "正在获取场次列表...");
+
+        // 🔥 不再过滤盘口，SB有数据的就是主盘口
+        const filterByHandicap = "0";
+        const futureDays =
+          document.getElementById("futureDaysSelect")?.value || "0";
+
+        let url = `/api/bifaw/matches?filter_by_handicap=${filterByHandicap}&future_days=${futureDays}`;
+        if (forceRefresh) url += "&refresh=1";
+
+        try {
+          const resp = await fetch(url);
+          const data = await resp.json();
+
+          if (data.success) {
+            matchCache = data.matches || [];
+            appendLog(`✅ 获取到 ${matchCache.length} 场比赛`, "success");
+            renderMatchList(matchCache);
+            // 更新今日比赛统计
+            document.getElementById("statTodayMatches").textContent =
+              matchCache.length;
+          } else {
+            appendLog(`❌ ${data.message}`, "error");
+          }
+        } catch (error) {
+          appendLog(`请求失败：${error}`, "error");
+        }
+      }
+
+      function renderMatchList(matches) {
+        const container = document.getElementById("matchList");
+
+        if (!matches || matches.length === 0) {
+          container.innerHTML =
+            '<div class="empty-state"><div class="icon">⚽</div><p>没有找到比赛</p></div>';
+          return;
+        }
+
+        container.innerHTML = matches
+          .map(
+            (match) => `
+        <div class="match-item">
+          <div class="match-info">
+            <div>
+              <span class="match-league">${match.league || "未知联赛"}</span>
+              <span class="match-time">${match.kickoff || ""}</span>
+            </div>
+            <div class="match-teams">
+              <span class="match-team">${match.home || "主队"}</span>
+              <span class="match-vs">vs</span>
+              <span class="match-team">${match.away || "客队"}</span>
+            </div>
+            ${
+              match.handicap_preview
+                ? `<div class="match-handicap">✓ 盘口：${formatHandicap(
+                    match.handicap_preview.handicap
+                  )}</div>`
+                : ""
+            }
+          </div>
+          <div class="match-actions">
+            <button class="btn btn-sm btn-primary" onclick="generateRecommendation('${encodeURIComponent(
+              JSON.stringify(match)
+            )}')">🎯 生成推荐</button>
+            <button class="btn btn-sm btn-success" onclick="collectAndSaveJson('${encodeURIComponent(
+              JSON.stringify(match)
+            )}', this)">💾 保存JSON</button>
+          </div>
+        </div>
+      `
+          )
+          .join("");
+      }
+
+      document
+        .getElementById("fetchMatchesBtn")
+        ?.addEventListener("click", () => loadMatches(false));
+      document
+        .getElementById("refreshMatchesBtn")
+        ?.addEventListener("click", () => loadMatches(true));
+
+      // ========== Scheduler ==========
+      document
+        .getElementById("checkSchedulerStatus")
+        ?.addEventListener("click", async () => {
+          try {
+            const resp = await fetch("/api/scheduler/status");
+            const data = await resp.json();
+
+            if (data.success) {
+              const info = document.getElementById("schedulerInfo");
+              info.classList.remove("hidden");
+              document.getElementById("jobId").textContent = data.job_id || "-";
+              document.getElementById("jobName").textContent =
+                data.job_name || "-";
+              document.getElementById("jobNextRun").textContent =
+                data.next_run || "-";
+              document.getElementById("jobTrigger").textContent =
+                data.trigger || "-";
+              appendLog("✅ 定时任务状态已加载", "success");
+            } else {
+              appendLog(`❌ ${data.message}`, "error");
+            }
+          } catch (error) {
+            appendLog(`请求失败：${error}`, "error");
+          }
+        });
+
+      document
+        .getElementById("triggerScheduler")
+        ?.addEventListener("click", async () => {
+          if (!confirm("确定要手动触发定时任务吗？")) return;
+
+          appendLog("正在触发定时任务...");
+          try {
+            const resp = await fetch("/api/scheduler/trigger", {
+              method: "POST",
+            });
+            const data = await resp.json();
+
+            if (data.success) {
+              appendLog("✅ 定时任务已触发", "success");
+            } else {
+              appendLog(`❌ ${data.message}`, "error");
+            }
+          } catch (error) {
+            appendLog(`请求失败：${error}`, "error");
+          }
+        });
+
+      // ========== Data Management ==========
+      document
+        .getElementById("loadCacheOverview")
+        ?.addEventListener("click", async () => {
+          appendLog("正在加载缓存统计...");
+          try {
+            const resp = await fetch("/api/cache/overview");
+            const data = await resp.json();
+
+            if (data.success) {
+              document
+                .getElementById("cacheOverviewCard")
+                .classList.remove("hidden");
+              const tbody = document.getElementById("cacheOverviewBody");
+              tbody.innerHTML = (data.overview || [])
+                .map(
+                  (item) => `
+            <tr>
+              <td>${item.date}</td>
+              <td>${item.file_count}</td>
+              <td>${item.total_rows}</td>
+              <td>${(item.total_size / 1024 / 1024).toFixed(2)}</td>
+            </tr>
+          `
+                )
+                .join("");
+              appendLog(
+                `✅ 已加载 ${data.overview?.length || 0} 天的统计数据`,
+                "success"
+              );
+            } else {
+              appendLog(`❌ ${data.message}`, "error");
+            }
+          } catch (error) {
+            appendLog(`请求失败：${error}`, "error");
+          }
+        });
+
+      // ========== Push Tests (Extended) ==========
+      document
+        .getElementById("testAllPushFunctions")
+        ?.addEventListener("click", async () => {
+          if (!confirm("确定要运行完整推送测试吗？将发送多条测试消息。"))
+            return;
+
+          const btn = document.getElementById("testAllPushFunctions");
+          btn.disabled = true;
+          btn.textContent = "测试中...";
+
+          const resultCard = document.getElementById("pushResultCard");
+          const resultContent = document.getElementById("pushTestResult");
+          resultCard.classList.remove("hidden");
+          resultContent.innerHTML =
+            '<div class="animate-pulse">⏳ 正在运行完整推送测试...</div>';
+
+          try {
+            const resp = await fetch("/api/push/test_all_functions", {
+              method: "POST",
+            });
+            const data = await resp.json();
+
+            if (data.success) {
+              resultContent.innerHTML = `<div class="alert alert-success">✅ 完成！${data.passed}/${data.total} 项通过</div>`;
+              appendLog(
+                `✅ 完整推送测试完成：${data.passed}/${data.total} 通过`,
+                "success"
+              );
+            } else {
+              resultContent.innerHTML = `<div class="alert alert-danger">❌ ${data.message}</div>`;
+            }
+          } catch (error) {
+            resultContent.innerHTML = `<div class="alert alert-danger">请求失败: ${error.message}</div>`;
+          } finally {
+            btn.disabled = false;
+            btn.textContent = "🧪 运行完整测试";
+          }
+        });
+
+      document
+        .getElementById("testHourlyBroadcast")
+        ?.addEventListener("click", async () => {
+          const hour = document.getElementById("broadcastHour").value;
+          appendLog(`正在测试整点播报（${hour || "当前"}小时）...`);
+
+          try {
+            const resp = await fetch("/api/push/test_hourly_broadcast", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ hour: hour ? parseInt(hour) : null }),
+            });
+            const data = await resp.json();
+
+            if (data.success) {
+              appendLog(`✅ ${data.message}`, "success");
+            } else {
+              appendLog(`❌ ${data.message}`, "error");
+            }
+          } catch (error) {
+            appendLog(`请求失败：${error}`, "error");
+          }
+        });
+
+      document
+        .getElementById("testPreMatch")
+        ?.addEventListener("click", async () => {
+          const minutes =
+            parseInt(document.getElementById("preMatchMinutes").value) || 5;
+          const time = document.getElementById("preMatchTime").value;
+
+          appendLog(`正在测试赛前${minutes}分钟推荐...`);
+
+          try {
+            const resp = await fetch("/api/push/test_pre_match", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                minutes_before: minutes,
+                time: time || null,
+                auto_collect: true, // 🔥 启用赛前5分钟自动采集最新数据
+              }),
+            });
+            const data = await resp.json();
+
+            if (data.success) {
+              appendLog(`✅ ${data.message}`, "success");
+            } else {
+              appendLog(`❌ ${data.message}`, "error");
+            }
+          } catch (error) {
+            appendLog(`请求失败：${error}`, "error");
+          }
+        });
+
+      // ========== Session Management ==========
+      document
+        .getElementById("viewSessionsBtn")
+        ?.addEventListener("click", async () => {
+          appendLog("正在加载历史会话...");
+          try {
+            // 🔥 同时获取旧版会话和新版后台采集任务
+            const [sessionsResp, bgTasksResp] = await Promise.all([
+              fetch("/api/collect/sessions"),
+              fetch("/api/background_collect/list?limit=20")
+            ]);
+            
+            const sessionsData = await sessionsResp.json();
+            const bgTasksData = await bgTasksResp.json();
+            
+            // 合并会话列表
+            let allSessions = [];
+            
+            // 添加旧版会话
+            if (sessionsData.success && sessionsData.sessions) {
+              allSessions = allSessions.concat(sessionsData.sessions.map(s => ({
+                ...s,
+                source: 'legacy'  // 标记为旧版会话
+              })));
+            }
+            
+            // 添加后台采集任务（转换格式）
+            if (bgTasksData.success && bgTasksData.tasks) {
+              const bgSessions = bgTasksData.tasks.map(t => ({
+                session_id: t.task_id,
+                start_date: t.start_date,
+                end_date: t.end_date,
+                status: t.status,
+                created_at: t.created_at,
+                total_matches: t.progress?.total_matches || 0,
+                progress: {
+                  // 🔥 修复：进度只算 success + failed，不算 skipped（跳过的是已缓存的）
+                  processed: (t.progress?.success || 0) + (t.progress?.failed || 0),
+                  success: t.progress?.success || 0,
+                  failed: t.progress?.failed || 0,
+                  skipped: t.progress?.skipped || 0
+                },
+                source: 'background'  // 标记为后台采集任务
+              }));
+              allSessions = allSessions.concat(bgSessions);
+            }
+            
+            // 按创建时间排序（最新的在前）
+            allSessions.sort((a, b) => {
+              const timeA = new Date(a.created_at || 0).getTime();
+              const timeB = new Date(b.created_at || 0).getTime();
+              return timeB - timeA;
+            });
+
+            const data = { success: true, sessions: allSessions };
+
+            if (data.success) {
+              const modal = document.getElementById("sessionModal");
+              const list = document.getElementById("sessionList");
+
+              const getStatusBadge = (status) => {
+                const statusMap = {
+                  completed: { class: "badge-success", text: "✅ 已完成" },
+                  running: { class: "badge-warning", text: "🔄 进行中" },
+                  paused: { class: "badge-info", text: "⏸️ 已暂停" },
+                  failed: { class: "badge-danger", text: "❌ 失败" },
+                };
+                return (
+                  statusMap[status] || {
+                    class: "badge-secondary",
+                    text: status,
+                  }
+                );
+              };
+
+              list.innerHTML =
+                (data.sessions || [])
+                  .map((s) => {
+                    const badge = getStatusBadge(s.status);
+                    const canResume = s.status !== "completed" && s.status !== "cancelled";
+                    const progressPct =
+                      s.total_matches > 0
+                        ? Math.round(
+                            ((s.progress?.processed || 0) / s.total_matches) *
+                              100
+                          )
+                        : 0;
+                    // 🔥 根据来源显示不同标识
+                    const sourceLabel = s.source === 'background' 
+                      ? '<span style="background:#4CAF50; color:#fff; padding:1px 6px; border-radius:3px; font-size:10px; margin-left:6px;">后台任务</span>'
+                      : '<span style="background:#2196F3; color:#fff; padding:1px 6px; border-radius:3px; font-size:10px; margin-left:6px;">普通会话</span>';
+                    
+                    // 🔥 根据来源使用不同的恢复函数
+                    const resumeFunc = s.source === 'background' 
+                      ? `resumeBackgroundTask('${s.session_id}')`
+                      : `resumeSession('${s.session_id}')`;
+                    
+                    const deleteFunc = s.source === 'background'
+                      ? `deleteBackgroundTask('${s.session_id}')`
+                      : `deleteSession('${s.session_id}')`;
+                    
+                    return `
+              <div class="session-item" style="padding: 12px; border-bottom: 1px solid #eee;">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <div>
+                    <div style="font-weight: 600; color: #333;">${
+                      s.start_date
+                    } ~ ${s.end_date}${sourceLabel}</div>
+                    <div style="font-size: 12px; color: #666; margin-top: 4px;">
+                      会话ID: ${s.session_id.substring(0, 30)}... | 创建: ${s.created_at ? new Date(s.created_at).toLocaleString('zh-CN') : 'N/A'}
+                    </div>
+                    <div style="font-size: 12px; color: #888; margin-top: 2px;">
+                      进度: ${s.progress?.processed || 0}/${s.total_matches} (${progressPct}%)
+                      ${s.progress?.skipped ? ` | 跳过: ${s.progress.skipped}` : ''}
+                    </div>
+                  </div>
+                  <div style="display: flex; align-items: center; gap: 8px;">
+                    <span class="badge ${
+                      badge.class
+                    }" style="font-size: 11px;">${badge.text}</span>
+                    ${
+                      canResume
+                        ? `
+                      <button class="btn btn-sm btn-primary" onclick="${resumeFunc}">
+                        🔄 恢复
+                      </button>
+                    `
+                        : ""
+                    }
+                    <button class="btn btn-sm btn-danger" onclick="${deleteFunc}" title="删除会话">
+                      🗑️
+                    </button>
+                  </div>
+                </div>
+              </div>
+            `;
+                  })
+                  .join("") ||
+                '<div class="empty-state" style="padding: 40px; text-align: center;"><p>没有历史会话</p></div>';
+
+              modal.classList.add("active");
+              appendLog(
+                `✅ 找到 ${data.sessions?.length || 0} 个会话`,
+                "success"
+              );
+            } else {
+              appendLog(`❌ ${data.message}`, "error");
+            }
+          } catch (error) {
+            appendLog(`请求失败：${error}`, "error");
+          }
+        });
+
+      async function resumeSession(sessionId) {
+        closeSessionModal();
+        appendLog(`🔄 正在恢复会话：${sessionId}`);
+
+        // 获取当前参数
+        const filterByHandicap =
+          document.getElementById("rangeFilterHandicap")?.checked ?? true;
+
+        try {
+          const eventSource = new EventSource(
+            `/api/collect/batch_range_stream?resume_session_id=${sessionId}&filter_by_handicap=${
+              filterByHandicap ? "1" : "0"
+            }`
+          );
+
+          eventSource.onmessage = (event) => {
+            try {
+              const data = JSON.parse(event.data);
+              handleCollectEvent(data, eventSource);
+            } catch (e) {
+              console.error("Parse error:", e);
+            }
+          };
+
+          eventSource.onerror = () => {
+            appendLog("恢复采集连接中断", "error");
+            eventSource.close();
+          };
+        } catch (error) {
+          appendLog(`恢复会话失败：${error}`, "error");
+        }
+      }
+
+      async function deleteSession(sessionId, force = false) {
+        const confirmMsg = force
+          ? `会话 ${sessionId} 状态为"进行中"，确定要强制删除吗？`
+          : `确定要删除会话 ${sessionId} 吗？此操作不可恢复。`;
+
+        if (!confirm(confirmMsg)) {
+          return;
+        }
+
+        try {
+          const url = force
+            ? `/api/sessions/${sessionId}?force=1`
+            : `/api/sessions/${sessionId}`;
+          const resp = await fetch(url, { method: "DELETE" });
+          const data = await resp.json();
+
+          if (data.success) {
+            appendLog(`✅ 会话 ${sessionId} 已删除`, "success");
+            // 重新加载会话列表
+            document.getElementById("viewSessionsBtn")?.click();
+          } else if (data.need_force) {
+            // 需要强制删除，再次确认
+            deleteSession(sessionId, true);
+          } else {
+            appendLog(`❌ 删除失败: ${data.error || data.message}`, "error");
+          }
+        } catch (error) {
+          appendLog(`❌ 删除请求失败: ${error}`, "error");
+        }
+      }
+
+      // 🔥 恢复后台采集任务
+      async function resumeBackgroundTask(taskId) {
+        closeSessionModal();
+        appendLog(`🔄 正在恢复后台采集任务：${taskId}`);
+        
+        try {
+          const resp = await fetch("/api/background_collect/resume", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ task_id: taskId })
+          });
+          const data = await resp.json();
+          
+          if (data.success) {
+            appendLog(`✅ 后台采集任务已恢复: ${taskId}`, "success");
+            // 显示后台采集状态
+            if (data.task) {
+              showBackgroundCollectStatus(data.task);
+              startBgCollectPolling(taskId);  // 🔥 修复：使用正确的函数名和参数
+            }
+          } else {
+            appendLog(`❌ 恢复失败: ${data.message}`, "error");
+          }
+        } catch (error) {
+          appendLog(`❌ 恢复任务失败: ${error}`, "error");
+        }
+      }
+      
+      // 🔥 删除后台采集任务
+      async function deleteBackgroundTask(taskId) {
+        if (!confirm(`确定要删除后台采集任务 ${taskId} 吗？`)) {
+          return;
+        }
+        
+        try {
+          const resp = await fetch(`/api/background_collect/delete?task_id=${taskId}`, {
+            method: "DELETE"
+          });
+          const data = await resp.json();
+          
+          if (data.success) {
+            appendLog(`✅ 后台采集任务已删除`, "success");
+            // 重新加载会话列表
+            document.getElementById("viewSessionsBtn")?.click();
+          } else {
+            appendLog(`❌ 删除失败: ${data.message}`, "error");
+          }
+        } catch (error) {
+          appendLog(`❌ 删除请求失败: ${error}`, "error");
+        }
+      }
+
+      // 通用的采集事件处理函数
+      function handleCollectEvent(data, eventSource) {
+        switch (data.type) {
+          case "resume":
+            appendLog(`✅ ${data.message}`, "success");
+            document.getElementById("sessionInfo")?.classList.remove("hidden");
+            document.getElementById("currentSessionId").textContent =
+              data.session_id;
+            break;
+          case "phase":
+            document.getElementById(
+              "collectPhase"
+            ).textContent = `阶段${data.phase}`;
+            appendLog(data.message);
+            break;
+          case "scan_result":
+            appendLog(`  ✓ ${data.date}: ${data.matches}场比赛`);
+            break;
+          case "scan_complete":
+            appendLog(`✅ 扫描完成，共 ${data.total_matches} 场需要采集`);
+            break;
+          case "session_created":
+            document.getElementById("sessionInfo")?.classList.remove("hidden");
+            document.getElementById("currentSessionId").textContent =
+              data.session_id;
+            appendLog(`📝 会话ID: ${data.session_id}`);
+            break;
+          case "day_start":
+            appendLog(`📅 ${data.date} 开始采集 (${data.matches}场)`);
+            document.getElementById(
+              "collectProgressDetail"
+            ).textContent = `${data.date} (0/${data.matches})`;
+            break;
+          case "match_success":
+            const pct = Math.round((data.current / data.total) * 100);
+            document.getElementById("collectProgressBar").style.width =
+              pct + "%";
+            document.getElementById("collectProgressBar").textContent =
+              pct + "%";
+            document.getElementById(
+              "collectProgressDetail"
+            ).textContent = `采集进度：${data.current}/${data.total}`;
+            appendLog(`  ✅ ${data.label}`, "success");
+            break;
+          case "match_failed":
+            appendLog(`  ❌ ${data.label}: ${data.error || "失败"}`, "error");
+            break;
+          case "match_skip":
+            appendLog(`  ⏭️ ${data.label} (${data.reason})`);
+            break;
+          case "day_complete":
+            appendLog(
+              `  ✓ ${data.date} 完成 (成功:${data.collected} 失败:${data.failed})`
+            );
+            break;
+          case "complete":
+            appendLog(
+              `🎉 采集完成！成功:${data.total_collected} 失败:${data.total_failed} 跳过:${data.total_skipped}`,
+              "success"
+            );
+            document.getElementById("collectProgressBar").style.width = "100%";
+            document.getElementById("collectProgressBar").textContent = "100%";
+            document.getElementById("collectPhase").textContent = "完成";
+            eventSource.close();
+            break;
+          case "error":
+            appendLog(`❌ ${data.message}`, "error");
+            eventSource.close();
+            break;
+        }
+      }
+
+      document
+        .getElementById("confirmResumeBtn")
+        ?.addEventListener("click", async () => {
+          const sessionId = document
+            .getElementById("resumeSessionId")
+            .value.trim();
+          if (!sessionId) {
+            appendLog("请输入会话ID", "warning");
+            return;
+          }
+          closeResumeModal();
+          await resumeSession(sessionId);
+        });
+
+      // ========== Initialize ==========
+      document.addEventListener("DOMContentLoaded", () => {
+        // Set default dates
+        const today = new Date();
+        const threeDaysAgo = new Date(today);
+        threeDaysAgo.setDate(today.getDate() - 3);
+        
+        // 🔥 计算昨天的日期（用于结束日期默认值）
+        const yesterday = new Date(today);
+        yesterday.setDate(today.getDate() - 1);
+
+        // 设置开始日期为3天前
+        ["rangeStartDate", "backtestDate"].forEach((id) => {
+          const input = document.getElementById(id);
+          if (input) input.value = threeDaysAgo.toISOString().split("T")[0];
+        });
+        
+        // 🔥 设置结束日期为昨天
+        const endDateInput = document.getElementById("rangeEndDate");
+        if (endDateInput) endDateInput.value = yesterday.toISOString().split("T")[0];
+
+        // Initialize broadcast hour select
+        const broadcastHour = document.getElementById("broadcastHour");
+        for (let i = 0; i < 24; i++) {
+          const option = document.createElement("option");
+          option.value = i;
+          option.textContent = `${i.toString().padStart(2, "0")}:00 - ${(i + 1)
+            .toString()
+            .padStart(2, "0")}:00`;
+          broadcastHour.appendChild(option);
+        }
+
+        // Refresh status and load stats
+        refreshStatus();
+        loadDashboardStats();
+
+        // Setup scroll spy for navigation
+        setupScrollSpy();
+
+        // 🔥 加载历史日志（页面刷新后恢复）
+        loadHistoryLogs();
+
+        // 🔥 每60秒自动刷新登录状态（检测后台自动登录）
+        setInterval(() => {
+          refreshStatus();
+        }, 60000);
+
+        appendLog("🚀 系统已就绪", "success");
+      });
+
+      // ========== Theme Toggle ==========
+      function toggleTheme() {
+        const html = document.documentElement;
+        const currentTheme = html.getAttribute("data-theme");
+        const newTheme = currentTheme === "dark" ? "light" : "dark";
+        html.setAttribute("data-theme", newTheme);
+        localStorage.setItem("theme", newTheme);
+
+        const btn = document.getElementById("themeToggleBtn");
+        btn.textContent = newTheme === "dark" ? "☀️" : "🌙";
+        appendLog(
+          `主题已切换为${newTheme === "dark" ? "深色" : "浅色"}模式`,
+          "info"
+        );
+      }
+
+      // Load saved theme
+      function loadSavedTheme() {
+        const savedTheme = localStorage.getItem("theme") || "light";
+        document.documentElement.setAttribute("data-theme", savedTheme);
+        document.getElementById("themeToggleBtn").textContent =
+          savedTheme === "dark" ? "☀️" : "🌙";
+      }
+
+      document
+        .getElementById("themeToggleBtn")
+        .addEventListener("click", toggleTheme);
+
+      // ========== Keyboard Shortcuts ==========
+      document.addEventListener("keydown", (e) => {
+        // Alt + key shortcuts
+        if (e.altKey) {
+          switch (e.key.toLowerCase()) {
+            case "t": // Toggle theme
+              e.preventDefault();
+              toggleTheme();
+              break;
+            case "r": // Refresh status
+              e.preventDefault();
+              refreshStatus();
+              break;
+            case "l": // Login
+              e.preventDefault();
+              document.getElementById("quickLoginBtn").click();
+              break;
+            case "e": // Export data
+              e.preventDefault();
+              exportData();
+              break;
+            case "1":
+              scrollToSection("dashboard");
+              break;
+            case "2":
+              scrollToSection("collect");
+              break;
+            case "3":
+              scrollToSection("recommend");
+              break;
+            case "4":
+              scrollToSection("backtest");
+              break;
+            case "5":
+              scrollToSection("push");
+              break;
+            case "6":
+              scrollToSection("data");
+              break;
+            case "7":
+              scrollToSection("pdf");
+              break;
+            case "8":
+              scrollToSection("scheduler");
+              break;
+            case "9":
+              scrollToSection("analytics");
+              break;
+          }
+        }
+        // Escape to close log drawer
+        if (e.key === "Escape" && logDrawerOpen) {
+          closeLogDrawer();
+        }
+      });
+
+      // ========== Analytics ==========
+      async function loadAnalyticsData() {
+        appendLog("正在加载统计数据...");
+
+        try {
+          // 加载总体统计
+          const statsResp = await fetch("/api/tracker/statistics");
+          const statsData = await statsResp.json();
+
+          if (statsData.success) {
+            document.getElementById("analyticTotal").textContent =
+              statsData.total || 0;
+            document.getElementById("analyticReviewed").textContent =
+              statsData.reviewed || 0;
+            document.getElementById("analyticCorrect").textContent =
+              statsData.correct || 0;
+            document.getElementById("analyticWrong").textContent =
+              statsData.wrong || 0;
+            document.getElementById("analyticAccuracy").textContent =
+              (statsData.accuracy || 0).toFixed(1) + "%";
+
+            // 更新仪表盘胜率
+            if (statsData.correct > 0 || statsData.wrong > 0) {
+              updateBacktestStats(
+                statsData.correct,
+                statsData.correct + statsData.wrong
+              );
+            }
+
+            // 渲染置信度统计
+            renderConfidenceStats(statsData.by_confidence || {});
+
+            appendLog("✅ 总体统计加载完成", "success");
+          }
+
+          // 加载近期趋势
+          const recentResp = await fetch("/api/tracker/recent?days=30");
+          const recentData = await recentResp.json();
+
+          if (recentData.success) {
+            renderTrendChart(recentData.reviews || []);
+          }
+
+          // 加载待审查
+          const pendingResp = await fetch("/api/tracker/pending");
+          const pendingData = await pendingResp.json();
+
+          if (pendingData.success) {
+            document.getElementById("pendingCount").textContent =
+              pendingData.count || 0;
+            renderPendingList(pendingData.recommendations || []);
+          }
+        } catch (error) {
+          appendLog(`❌ 加载统计数据失败: ${error}`, "error");
+        }
+      }
+
+      function renderConfidenceStats(byConfidence) {
+        const levels = {
+          high: { name: "高置信度 (≥85%)", color: "var(--success)" },
+          mid: { name: "中置信度 (60-85%)", color: "var(--warning)" },
+          low: { name: "低置信度 (<60%)", color: "var(--text-secondary)" },
+        };
+
+        const tbody = document.getElementById("confidenceStatsBody");
+
+        if (!byConfidence || Object.keys(byConfidence).length === 0) {
+          tbody.innerHTML =
+            '<tr><td colspan="6" style="text-align: center; color: var(--text-secondary);">暂无数据</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = Object.entries(levels)
+          .map(([key, info]) => {
+            const stats = byConfidence[key] || {
+              total: 0,
+              correct: 0,
+              wrong: 0,
+              accuracy: 0,
+            };
+            const total = stats.correct + stats.wrong;
+            const progressWidth = total > 0 ? Math.min(stats.accuracy, 100) : 0;
+
+            return `
+            <tr>
+              <td><span style="color: ${info.color}; font-weight: 600;">${
+              info.name
+            }</span></td>
+              <td>${stats.total || 0}</td>
+              <td style="color: var(--success);">${stats.correct || 0}</td>
+              <td style="color: var(--danger);">${stats.wrong || 0}</td>
+              <td><strong>${(stats.accuracy || 0).toFixed(1)}%</strong></td>
+              <td style="width: 150px;">
+                <div class="progress" style="height: 8px;">
+                  <div class="progress-bar" style="width: ${progressWidth}%; background: ${
+              info.color
+            };"></div>
+                </div>
+              </td>
+            </tr>
+          `;
+          })
+          .join("");
+      }
+
+      function renderTrendChart(reviews) {
+        const container = document.getElementById("trendChart");
+
+        if (!reviews || reviews.length === 0) {
+          container.innerHTML =
+            '<div class="empty-state"><div class="icon">📊</div><p>暂无趋势数据</p></div>';
+          return;
+        }
+
+        // 简单的文本表格形式展示趋势（可以后续替换为图表库）
+        const sortedReviews = reviews.sort((a, b) =>
+          a.review_date.localeCompare(b.review_date)
+        );
+
+        container.innerHTML = `
+          <div style="width: 100%; overflow-x: auto;">
+            <table class="data-table" style="margin: 0;">
+              <thead>
+                <tr>
+                  <th>日期</th>
+                  <th>推荐数</th>
+                  <th>正确</th>
+                  <th>错误</th>
+                  <th>准确率</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${sortedReviews
+                  .map(
+                    (r) => `
+                  <tr>
+                    <td>${r.review_date}</td>
+                    <td>${r.total_recommendations || 0}</td>
+                    <td style="color: var(--success);">${r.correct || 0}</td>
+                    <td style="color: var(--danger);">${r.wrong || 0}</td>
+                    <td>
+                      <strong style="color: ${
+                        (r.accuracy || 0) >= 60
+                          ? "var(--success)"
+                          : (r.accuracy || 0) >= 50
+                          ? "var(--warning)"
+                          : "var(--danger)"
+                      }">
+                        ${(r.accuracy || 0).toFixed(1)}%
+                      </strong>
+                    </td>
+                  </tr>
+                `
+                  )
+                  .join("")}
+              </tbody>
+            </table>
+          </div>
+        `;
+      }
+
+      function renderPendingList(recommendations) {
+        const container = document.getElementById("pendingList");
+
+        if (!recommendations || recommendations.length === 0) {
+          container.innerHTML =
+            '<div class="empty-state"><div class="icon">✅</div><p>暂无待审查的推荐</p></div>';
+          return;
+        }
+
+        container.innerHTML = recommendations
+          .slice(0, 20)
+          .map(
+            (rec) => `
+          <div class="match-item">
+            <div class="match-info">
+              <div>
+                <span class="match-league">${rec.league || "未知联赛"}</span>
+                <span class="match-time">${rec.match_date} ${
+              rec.match_time || ""
+            }</span>
+              </div>
+              <div class="match-teams">
+                <span class="match-team">${rec.home_team}</span>
+                <span class="match-vs">vs</span>
+                <span class="match-team">${rec.away_team}</span>
+              </div>
+            </div>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span class="badge ${
+                rec.recommendation === "home"
+                  ? "badge-primary"
+                  : "badge-warning"
+              }">
+                推荐: ${rec.recommendation === "home" ? "主胜" : "客胜"}
+              </span>
+              <span class="badge badge-secondary">${(
+                rec.confidence * 100
+              ).toFixed(0)}%</span>
+            </div>
+          </div>
+        `
+          )
+          .join("");
+
+        if (recommendations.length > 20) {
+          container.innerHTML += `<p class="text-muted" style="text-align: center; margin-top: 16px;">还有 ${
+            recommendations.length - 20
+          } 条未显示...</p>`;
+        }
+      }
+
+      async function triggerReview() {
+        appendLog("正在手动审查昨日推荐...");
+
+        try {
+          const resp = await fetch("/api/tracker/review", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({}),
+          });
+          const data = await resp.json();
+
+          if (data.success) {
+            appendLog(
+              `✅ 审查完成: ${data.reviewed || 0}/${
+                data.total || 0
+              } 已审查, 准确率: ${(data.accuracy || 0).toFixed(1)}%`,
+              "success"
+            );
+            loadAnalyticsData(); // 刷新数据
+          } else {
+            appendLog(`❌ 审查失败: ${data.message}`, "error");
+          }
+        } catch (error) {
+          appendLog(`❌ 审查请求失败: ${error}`, "error");
+        }
+      }
+
+      async function deleteAllRecommendations() {
+        if (!confirm("⚠️ 确定要删除所有推荐记录吗？此操作不可恢复！")) {
+          return;
+        }
+
+        appendLog("正在删除所有推荐记录...");
+
+        try {
+          const resp = await fetch("/api/tracker/delete-all", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+          });
+          const data = await resp.json();
+
+          if (data.success) {
+            appendLog(
+              `✅ 删除成功: ${data.deleted_recommendations || 0} 条推荐记录, ${data.deleted_reviews || 0} 条每日统计`,
+              "success"
+            );
+            loadAnalyticsData(); // 刷新数据
+          } else {
+            appendLog(`❌ 删除失败: ${data.message}`, "error");
+          }
+        } catch (error) {
+          appendLog(`❌ 删除请求失败: ${error}`, "error");
+        }
+      }
+
+      // ========== Data Export ==========
+      function exportData() {
+        appendLog("正在准备导出数据...");
+
+        const exportObj = {
+          exportTime: new Date().toISOString(),
+          todayMatches: matchCache,
+          finishedMatches: finishedMatchesData,
+          backtestResults: backtestResults,
+          stats: {
+            todayMatchCount:
+              document.getElementById("statTodayMatches").textContent,
+            cachedData: document.getElementById("statCachedData").textContent,
+            schedulerStatus: document.getElementById("statSchedulerStatus")
+              .textContent,
+          },
+        };
+
+        const dataStr = JSON.stringify(exportObj, null, 2);
+        const blob = new Blob([dataStr], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `data_export_${
+          new Date().toISOString().split("T")[0]
+        }.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        appendLog("✅ 数据已导出为JSON文件", "success");
+      }
+
+      // Mobile menu
+      const sidebar = document.getElementById("sidebar");
+      const sidebarOverlay = document.getElementById("sidebarOverlay");
+      const mobileMenuBtn = document.getElementById("mobileMenuBtn");
+      
+      // 打开侧边栏
+      function openSidebar() {
+        sidebar.classList.add("open");
+        sidebarOverlay.classList.add("show");
+        document.body.style.overflow = "hidden";  // 防止背景滚动
+      }
+      
+      // 关闭侧边栏
+      function closeSidebar() {
+        sidebar.classList.remove("open");
+        sidebarOverlay.classList.remove("show");
+        document.body.style.overflow = "";
+      }
+      
+      // 点击菜单按钮打开侧边栏
+      mobileMenuBtn?.addEventListener("click", () => {
+        if (sidebar.classList.contains("open")) {
+          closeSidebar();
+        } else {
+          openSidebar();
+        }
+      });
+      
+      // 点击遮罩层关闭侧边栏
+      sidebarOverlay?.addEventListener("click", closeSidebar);
+      
+      // 点击导航项后自动关闭侧边栏（移动端）
+      document.querySelectorAll(".nav-item").forEach(item => {
+        item.addEventListener("click", () => {
+          if (window.innerWidth <= 1024) {
+            closeSidebar();
+          }
+        });
+      });
+      
+      // 监听浏览器返回按钮（移动端）
+      window.addEventListener("popstate", (event) => {
+        if (sidebar.classList.contains("open")) {
+          closeSidebar();
+        }
+      });
+
+      // Load theme on start
+      loadSavedTheme();
+
+      // ========== 后台任务功能 ==========
+      let currentTaskId = null;
+      let taskPollingInterval = null;
+
+      // 后台任务弹窗
+      function openTasksModal() {
+        console.log("openTasksModal called");
+        const modal = document.getElementById("tasksModal");
+        console.log("Modal element:", modal);
+        if (modal) {
+          // 强制设置样式，包括visibility
+          modal.style.cssText = "display: block !important; visibility: visible !important; position: fixed !important; top: 0 !important; left: 0 !important; right: 0 !important; bottom: 0 !important; width: 100vw !important; height: 100vh !important; background: rgba(0,0,0,0.7) !important; z-index: 999999 !important; overflow: auto !important;";
+          console.log("Modal display set to block with visibility visible");
+          refreshTasks();
+        } else {
+          console.error("Modal element not found!");
+        }
+      }
+
+      function closeTasksModal() {
+        console.log("closeTasksModal called");
+        const modal = document.getElementById("tasksModal");
+        if (modal) {
+          modal.style.display = "none";
+          modal.style.visibility = "hidden";
+        }
+      }
+
+      // 🔥 显示/隐藏任务列表
+      function toggleTasksList() {
+        const card = document.getElementById("tasksListCard");
+        const btn = document.getElementById("viewTasksBtn");
+        
+        if (card.style.display === "none" || card.style.display === "") {
+          card.style.display = "block";
+          btn.textContent = "🔼 隐藏任务";
+          refreshTasksList();
+          
+          // 滚动到任务列表
+          setTimeout(() => {
+            card.scrollIntoView({ behavior: "smooth", block: "start" });
+          }, 100);
+        } else {
+          card.style.display = "none";
+          btn.textContent = "📋 查看任务";
+        }
+      }
+
+      // 🔥 刷新任务列表（页面内显示）
+      async function refreshTasksList() {
+        const container = document.getElementById("tasksListContainer");
+        container.innerHTML = '<div style="text-align: center; padding: 20px; color: #666;">加载中...</div>';
+
+        try {
+          const resp = await fetch("/api/tasks?limit=20");
+          const data = await resp.json();
+
+          if (!data.success || data.count === 0) {
+            container.innerHTML = '<div style="text-align: center; padding: 40px; color: #999;">暂无后台任务</div>';
+            return;
+          }
+
+          let html = '';
+          for (const task of data.tasks) {
+            const progress = task.progress || {};
+            const pct = progress.percentage || 0;
+            const statusBadge = getTaskStatusBadge(task.status);
+            
+            // 判断任务是否已结束
+            const isFinished = task.status === 'completed' || task.status === 'failed' || task.status === 'cancelled';
+            const isRunning = task.status === 'running';
+            const isPaused = task.status === 'paused';
+
+            html += `
+              <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 16px; margin-bottom: 12px; background: #fafafa;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                  <strong style="font-size: 16px;">🎯 采集任务</strong>
+                  ${statusBadge}
+                </div>
+                <div style="font-size: 13px; color: #666; margin-bottom: 8px;">
+                  任务ID: ${task.task_id}<br>
+                  创建时间: ${task.created_at ? new Date(task.created_at).toLocaleString('zh-CN') : 'N/A'}
+                </div>
+                <div style="background: #e0e0e0; border-radius: 4px; height: 24px; margin-bottom: 8px; overflow: hidden; position: relative;">
+                  <div style="background: linear-gradient(90deg, #4CAF50, #8BC34A); height: 100%; width: ${pct}%; transition: width 0.3s; position: absolute; top: 0; left: 0;"></div>
+                  <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; display: flex; align-items: center; justify-content: center; color: ${pct > 50 ? 'white' : '#333'}; font-size: 12px; font-weight: 600; z-index: 1;">
+                    ${pct}%
+                  </div>
+                </div>
+                <div style="font-size: 13px; color: #555; margin-bottom: 10px;">
+                  进度: ${progress.processed || 0}/${progress.total || 0} | 
+                  成功: ${progress.success || 0} | 
+                  失败: ${progress.failed || 0} | 
+                  跳过: ${progress.skipped || 0}
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                  ${isRunning ? `<button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); stopTask('${task.task_id}'); return false;" style="padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; background: #f44336; color: white;">⏹️ 停止</button>` : ''}
+                  ${isPaused ? `<button class="btn btn-sm btn-success" onclick="event.stopPropagation(); resumeTask('${task.task_id}'); return false;" style="padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; background: #4CAF50; color: white;">▶️ 恢复</button>` : ''}
+                  <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); viewTaskLogs('${task.task_id}'); return false;" style="padding: 6px 12px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; font-size: 13px; background: #f5f5f5; color: #333;">📋 日志</button>
+                  <button class="btn btn-sm btn-danger" onclick="event.stopPropagation(); deleteTask('${task.task_id}'); return false;" style="padding: 6px 12px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; background: #f44336; color: white;">🗑️ 删除</button>
+                </div>
+              </div>
+            `;
+          }
+
+          container.innerHTML = html;
+        } catch (error) {
+          container.innerHTML = `<div style="text-align: center; padding: 20px; color: red;">加载失败: ${error.message}</div>`;
+        }
+      }
+
+      // 停止任务
+      async function stopTask(taskId) {
+        console.log("🔴 stopTask called with taskId:", taskId);
+        
+        if (!taskId) {
+          console.error("❌ taskId is null or undefined");
+          alert("错误：任务ID无效");
+          return;
+        }
+        
+        if (!confirm('确定要停止这个任务吗？')) {
+          console.log("User cancelled stop operation");
+          return;
+        }
+        
+        try {
+          console.log("📤 Sending stop request to:", `/api/tasks/${taskId}/stop`);
+          const resp = await fetch(`/api/tasks/${taskId}/stop`, {
+            method: 'POST'
+          });
+          
+          console.log("📥 Response status:", resp.status);
+          const data = await resp.json();
+          console.log("📥 Response data:", data);
+          
+          if (data.success) {
+            appendLog(`⏹️ 任务已停止: ${taskId}`, 'success');
+            // 立即刷新任务列表
+            setTimeout(() => refreshTasksList(), 500);
+          } else {
+            appendLog(`❌ 停止失败: ${data.message}`, 'error');
+          }
+        } catch (error) {
+          console.error("❌ Stop task error:", error);
+          appendLog(`❌ 停止任务失败: ${error}`, 'error');
+          alert(`停止任务失败: ${error.message}`);
+        }
+      }
+
+      // 恢复任务
+      async function resumeTask(taskId) {
+        console.log("🟢 resumeTask called with taskId:", taskId);
+        
+        if (!taskId) {
+          console.error("❌ taskId is null or undefined");
+          alert("错误：任务ID无效");
+          return;
+        }
+        
+        try {
+          console.log("📤 Sending resume request to:", `/api/tasks/${taskId}/resume`);
+          const resp = await fetch(`/api/tasks/${taskId}/resume`, {
+            method: 'POST'
+          });
+          
+          console.log("📥 Response status:", resp.status);
+          const data = await resp.json();
+          console.log("📥 Response data:", data);
+          
+          if (data.success) {
+            appendLog(`▶️ 任务已恢复: ${taskId}`, 'success');
+            // 立即刷新任务列表
+            setTimeout(() => refreshTasksList(), 500);
+          } else {
+            appendLog(`❌ 恢复失败: ${data.message}`, 'error');
+          }
+        } catch (error) {
+          console.error("❌ Resume task error:", error);
+          appendLog(`❌ 恢复任务失败: ${error}`, 'error');
+          alert(`恢复任务失败: ${error.message}`);
+        }
+      }
+
+      // 删除任务
+      async function deleteTask(taskId) {
+        if (!confirm('确定要删除这个任务吗？此操作不可恢复！')) return;
+        
+        try {
+          const resp = await fetch(`/api/tasks/${taskId}`, {
+            method: 'DELETE'
+          });
+          const data = await resp.json();
+          
+          if (data.success) {
+            appendLog(`🗑️ 任务已删除: ${taskId}`, 'success');
+            refreshTasksList();
+          } else {
+            appendLog(`❌ 删除失败: ${data.message}`, 'error');
+          }
+        } catch (error) {
+          appendLog(`❌ 删除任务失败: ${error}`, 'error');
+        }
+      }
+
+      // 删除所有任务
+      async function deleteAllTasks() {
+        if (!confirm('确定要删除所有任务吗？此操作不可恢复！\n\n注意：正在运行的任务不会被删除。')) return;
+        
+        try {
+          const resp = await fetch('/api/tasks/delete_all', {
+            method: 'POST'
+          });
+          const data = await resp.json();
+          
+          if (data.success) {
+            appendLog(`🗑️ 已删除 ${data.deleted_count} 个任务`, 'success');
+            refreshTasksList();
+          } else {
+            appendLog(`❌ 删除失败: ${data.message}`, 'error');
+          }
+        } catch (error) {
+          appendLog(`❌ 删除所有任务失败: ${error}`, 'error');
+        }
+      }
+
+      // 查看任务日志
+      async function viewTaskLogs(taskId) {
+        try {
+          const resp = await fetch(`/api/tasks/${taskId}/logs?limit=100`);
+          const data = await resp.json();
+          
+          if (data.success) {
+            // 显示日志在控制台或弹窗
+            let logText = `任务日志 (${taskId}):\n\n`;
+            data.logs.forEach(log => {
+              logText += `[${log.time}] ${log.level}: ${log.message}\n`;
+            });
+            
+            // 创建一个简单的日志查看器
+            const logWindow = window.open('', '_blank', 'width=800,height=600');
+            logWindow.document.write(`
+              <html>
+                <head>
+                  <title>任务日志 - ${taskId}</title>
+                  <style>
+                    body { font-family: monospace; padding: 20px; background: #1e1e1e; color: #d4d4d4; }
+                    pre { white-space: pre-wrap; word-wrap: break-word; }
+                    .error { color: #f48771; }
+                    .warning { color: #dcdcaa; }
+                    .info { color: #4ec9b0; }
+                  </style>
+                </head>
+                <body>
+                  <h2>任务日志: ${taskId}</h2>
+                  <pre>${data.logs.map(log => {
+                    const className = log.level.toLowerCase();
+                    return `<span class="${className}">[${log.time}] ${log.level}: ${log.message}</span>`;
+                  }).join('\n')}</pre>
+                </body>
+              </html>
+            `);
+          } else {
+            appendLog(`❌ 获取日志失败: ${data.message}`, 'error');
+          }
+        } catch (error) {
+          appendLog(`❌ 获取任务日志失败: ${error}`, 'error');
+        }
+      }
+
+      // 刷新任务列表
+      async function refreshTasks() {
+        const tasksList = document.getElementById("tasksList");
+        tasksList.innerHTML = '<p style="text-align:center;">加载中...</p>';
+
+        try {
+          const resp = await fetch("/api/tasks?limit=20");
+          const data = await resp.json();
+
+          if (!data.success || data.count === 0) {
+            tasksList.innerHTML = '<p style="text-align:center;color:#888;">暂无后台任务</p>';
+            return;
+          }
+
+          let html = '';
+          for (const task of data.tasks) {
+            const statusBadge = getTaskStatusBadge(task.status);
+            const progress = task.progress || {};
+            const pct = progress.percentage || 0;
+
+            html += `
+              <div style="border:1px solid #ddd; border-radius:8px; padding:12px; margin-bottom:10px; background:#f9f9f9;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                  <strong>${task.task_type === 'collect' ? '🎯 采集任务' : task.task_type}</strong>
+                  ${statusBadge}
+                </div>
+                <div style="font-size:12px; color:#666; margin-bottom:6px;">
+                  任务ID: ${task.task_id} | 创建: ${task.created_at ? new Date(task.created_at).toLocaleString('zh-CN') : 'N/A'}
+                </div>
+                <div style="background:#e0e0e0; border-radius:4px; height:20px; margin-bottom:8px;">
+                  <div style="background:linear-gradient(90deg, #4CAF50, #8BC34A); height:100%; border-radius:4px; width:${pct}%; transition:width 0.3s;"></div>
+                </div>
+                <div style="font-size:12px; color:#555;">
+                  进度: ${progress.processed || 0}/${progress.total || 0} (${pct}%)
+                  | 成功: ${progress.success || 0} | 失败: ${progress.failed || 0} | 跳过: ${progress.skipped || 0}
+                </div>
+                <div style="margin-top:8px;">
+                  ${task.status === 'running' ? `<button class="btn btn-danger btn-sm" onclick="stopTask('${task.task_id}')">⏹️ 停止</button>` : ''}
+                  <button class="btn btn-outline btn-sm" onclick="viewTaskLogs('${task.task_id}')">📋 日志</button>
+                </div>
+              </div>
+            `;
+          }
+
+          tasksList.innerHTML = html;
+        } catch (error) {
+          tasksList.innerHTML = `<p style="color:red;">加载失败: ${error}</p>`;
+        }
+      }
+
+      function getTaskStatusBadge(status) {
+        const badges = {
+          'pending': '<span style="background:#FFC107; color:#000; padding:2px 8px; border-radius:4px; font-size:11px;">等待中</span>',
+          'running': '<span style="background:#2196F3; color:#fff; padding:2px 8px; border-radius:4px; font-size:11px;">运行中</span>',
+          'paused': '<span style="background:#FF9800; color:#fff; padding:2px 8px; border-radius:4px; font-size:11px;">已暂停</span>',
+          'completed': '<span style="background:#4CAF50; color:#fff; padding:2px 8px; border-radius:4px; font-size:11px;">已完成</span>',
+          'failed': '<span style="background:#F44336; color:#fff; padding:2px 8px; border-radius:4px; font-size:11px;">失败</span>',
+          'cancelled': '<span style="background:#9E9E9E; color:#fff; padding:2px 8px; border-radius:4px; font-size:11px;">已取消</span>',
+        };
+        return badges[status] || `<span style="background:#888; color:#fff; padding:2px 8px; border-radius:4px; font-size:11px;">${status}</span>`;
+      }
+
+      // 启动后台采集（并发采集按钮调用此函数）
+      let isCollecting = false;  // 🔥 添加标志变量防止重复点击
+      
+      async function startBackgroundCollect() {
+        console.log("startBackgroundCollect called, isCollecting:", isCollecting, "currentTaskId:", currentTaskId);
+        
+        // 如果正在采集，执行停止操作
+        if (isCollecting && currentTaskId) {
+          console.log("Attempting to stop task:", currentTaskId);
+          if (confirm("确定要停止当前采集任务吗？")) {
+            try {
+              const stopResp = await fetch(`/api/tasks/${currentTaskId}/stop`, {
+                method: "POST"
+              });
+              const stopData = await stopResp.json();
+              console.log("Stop response:", stopData);
+              if (stopData.success) {
+                appendLog("⏹️ 采集任务已停止", "warning");
+                // 按钮状态会在轮询中自动更新
+              } else {
+                appendLog(`❌ 停止失败: ${stopData.message}`, "error");
+              }
+            } catch (error) {
+              console.error("Stop error:", error);
+              appendLog(`停止任务失败: ${error}`, "error");
+            }
+          }
+          return;
+        }
+        
+        console.log("Starting new collection task");
+        const startDate = document.getElementById("rangeStartDate").value;
+        const filterByHandicap = document.getElementById("rangeFilterHandicap")?.checked ?? true;
+        const superMode = document.getElementById("superModeCheckbox")?.checked ?? true;  // 🔥 获取四合一模式选项
+        
+        // 🔥 添加调试日志
+        console.log("🔥 采集参数:", {
+          startDate,
+          filterByHandicap,
+          superMode,
+          workers: 3
+        });
+
+        if (!startDate) {
+          alert("请选择开始日期");
+          return;
+        }
+
+        const btn = document.getElementById("startRangeConcurrentBtn");
+        btn.disabled = true;
+        btn.textContent = "🔄 启动中...";
+
+        try {
+          const resp = await fetch("/api/tasks/collect/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              start_date: startDate,
+              filter_by_handicap: filterByHandicap,
+              skip_cached: true,
+              super_mode: superMode,  // 🔥 传递四合一模式参数
+              workers: 3
+            })
+          });
+
+          const data = await resp.json();
+          console.log("Start response:", data);
+
+          if (data.success) {
+            currentTaskId = data.task_id;
+            isCollecting = true;  // 🔥 设置采集标志
+            console.log("Task started, currentTaskId:", currentTaskId, "isCollecting:", isCollecting);
+            appendLog(`🚀 后台采集任务已启动: ${data.task_id}`, "success");
+            appendLog("💡 可以关闭页面，采集将在后台继续运行", "info");
+
+            // 显示进度卡片
+            const progressCard = document.getElementById("collectProgressCard");
+            progressCard.style.display = "block";
+            progressCard.classList.remove("hidden");
+            document.getElementById("collectPhase").textContent = "后台运行";
+
+            // 更新按钮状态 - 变成停止按钮
+            btn.textContent = "⏹️ 停止采集";
+            btn.disabled = false;
+            btn.classList.remove("btn-primary");
+            btn.classList.add("btn-danger");
+
+            // 开始轮询进度和日志
+            startTaskPolling(data.task_id);
+          } else {
+            appendLog(`❌ 启动失败: ${data.message}`, "error");
+            btn.disabled = false;
+            btn.textContent = "🚀 开始采集";
+          }
+        } catch (error) {
+          console.error("Start error:", error);
+          appendLog(`❌ 启动后台采集失败: ${error}`, "error");
+          btn.disabled = false;
+          btn.textContent = "🚀 开始采集";
+        }
+      }
+
+      // 🐌 串行采集函数 - 一场一场采集，适合低配置服务器
+      let isSerialCollecting = false;
+      
+      async function startSerialCollect() {
+        console.log("startSerialCollect called, isSerialCollecting:", isSerialCollecting, "currentTaskId:", currentTaskId);
+        
+        // 如果正在采集，执行停止操作
+        if (isSerialCollecting && currentTaskId) {
+          console.log("Attempting to stop serial task:", currentTaskId);
+          if (confirm("确定要停止当前串行采集任务吗？")) {
+            try {
+              const stopResp = await fetch(`/api/tasks/${currentTaskId}/stop`, {
+                method: "POST"
+              });
+              const stopData = await stopResp.json();
+              console.log("Serial stop response:", stopData);
+              if (stopData.success) {
+                appendLog("⏹️ 串行采集任务已停止", "warning");
+              } else {
+                appendLog(`❌ 停止失败: ${stopData.message}`, "error");
+              }
+            } catch (error) {
+              console.error("Serial stop error:", error);
+              appendLog(`停止任务失败: ${error}`, "error");
+            }
+          }
+          return;
+        }
+        
+        console.log("Starting new serial collection task");
+        const startDate = document.getElementById("rangeStartDate").value;
+        const filterByHandicap = document.getElementById("rangeFilterHandicap")?.checked ?? true;
+        const superMode = document.getElementById("superModeCheckbox")?.checked ?? true;
+        
+        // 🔥 添加调试日志
+        console.log("🔥 串行采集参数:", {
+          startDate,
+          filterByHandicap,
+          superMode,
+          workers: 1
+        });
+
+        if (!startDate) {
+          alert("请选择开始日期");
+          return;
+        }
+
+        const btn = document.getElementById("startSerialCollectBtn");
+        btn.disabled = true;
+        btn.textContent = "🔄 启动中...";
+
+        try {
+          const resp = await fetch("/api/tasks/collect/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              start_date: startDate,
+              filter_by_handicap: filterByHandicap,
+              skip_cached: true,
+              super_mode: superMode,
+              workers: 1  // 🔥 串行采集：设置并发数为1
+            })
+          });
+
+          const data = await resp.json();
+          console.log("Serial start response:", data);
+
+          if (data.success) {
+            currentTaskId = data.task_id;
+            isSerialCollecting = true;
+            console.log("Serial task started, currentTaskId:", currentTaskId, "isSerialCollecting:", isSerialCollecting);
+            appendLog(`🐌 串行采集任务已启动: ${data.task_id}`, "success");
+            appendLog("💡 串行模式：一场一场采集，适合低配置服务器", "info");
+
+            // 显示进度卡片
+            const progressCard = document.getElementById("collectProgressCard");
+            progressCard.style.display = "block";
+            progressCard.classList.remove("hidden");
+            document.getElementById("collectPhase").textContent = "串行运行";
+
+            // 更新按钮状态
+            btn.textContent = "⏹️ 停止串行";
+            btn.disabled = false;
+            btn.classList.remove("btn-info");
+            btn.classList.add("btn-danger");
+
+            // 开始轮询进度和日志
+            startTaskPolling(data.task_id);
+          } else {
+            appendLog(`❌ 启动失败: ${data.message}`, "error");
+            btn.disabled = false;
+            btn.textContent = "🐌 串行采集";
+          }
+        } catch (error) {
+          appendLog(`❌ 启动串行采集失败: ${error}`, "error");
+          btn.disabled = false;
+          btn.textContent = "🐌 串行采集";
+        }
+      }
+
+      // 轮询任务进度和日志
+      let lastLogIndex = 0;  // 记录上次读取的日志位置
+
+      function startTaskPolling(taskId) {
+        if (taskPollingInterval) {
+          clearInterval(taskPollingInterval);
+        }
+        lastLogIndex = 0;  // 重置日志位置
+
+        taskPollingInterval = setInterval(async () => {
+          try {
+            // 获取任务状态
+            const resp = await fetch(`/api/tasks/${taskId}/status`);
+            const data = await resp.json();
+
+            if (!data.success) {
+              clearInterval(taskPollingInterval);
+              return;
+            }
+
+            const task = data.task;
+            const progress = task.progress || {};
+            const pct = progress.percentage || 0;
+
+            // 🔥 格式化时间显示（秒 -> "Xmin Ysec"）
+            function formatTime(seconds) {
+              if (!seconds || seconds < 1) return '0秒';
+              const min = Math.floor(seconds / 60);
+              const sec = Math.round(seconds % 60);
+              if (min > 0) {
+                return sec > 0 ? `${min}分${sec}秒` : `${min}分`;
+              }
+              return `${sec}秒`;
+            }
+
+            // 更新进度条
+            document.getElementById("collectProgressBar").style.width = `${pct}%`;
+            document.getElementById("collectProgressBar").textContent = `${pct}%`;
+            
+            // 🔥 构建详细进度信息（包含时间和统计）
+            let detailText = `${pct}% (${progress.processed || 0}/${progress.total || 0})`;
+            
+            // 添加成功、失败、跳过统计
+            detailText += ` | 成功: ${progress.success || 0} | 失败: ${progress.failed || 0} | 跳过: ${progress.skipped || 0}`;
+            
+            // 添加本场用时
+            if (progress.current_match_elapsed && progress.current_match_elapsed > 0) {
+              detailText += ` | 本场: ${formatTime(progress.current_match_elapsed)}`;
+            }
+            
+            // 添加平均用时
+            if (progress.avg_time_per_match && progress.avg_time_per_match > 0) {
+              detailText += ` | 平均: ${formatTime(progress.avg_time_per_match)}`;
+            }
+            
+            // 添加预计剩余时间
+            if (progress.estimated_remaining_seconds && progress.estimated_remaining_seconds > 0) {
+              detailText += ` | 预计剩余: ${formatTime(progress.estimated_remaining_seconds)}`;
+            }
+            
+            document.getElementById("collectProgressDetail").textContent = detailText;
+
+            // 获取新日志并显示
+            try {
+              const logResp = await fetch(`/api/tasks/${taskId}/logs?offset=${lastLogIndex}&limit=50`);
+              const logData = await logResp.json();
+              if (logData.success && logData.logs && logData.logs.length > 0) {
+                for (const log of logData.logs) {
+                  const logType = log.level === 'ERROR' ? 'error' :
+                                  log.level === 'WARNING' ? 'warning' :
+                                  log.level === 'SUCCESS' ? 'success' : 'info';
+                  appendLog(log.message, logType);
+                }
+                lastLogIndex += logData.logs.length;
+              }
+            } catch (logError) {
+              console.error("获取日志失败:", logError);
+            }
+
+            // 🔥 定期刷新任务列表（每10秒一次）
+            if (Math.floor(Date.now() / 1000) % 5 === 0) {  // 每10秒刷新一次
+              refreshTasksList();
+            }
+
+            // 检查是否完成
+            if (task.status === 'completed' || task.status === 'failed' || task.status === 'cancelled') {
+              clearInterval(taskPollingInterval);
+              taskPollingInterval = null;
+              isCollecting = false;  // 🔥 重置采集标志
+              isSerialCollecting = false;  // 🔥 重置串行采集标志
+              currentTaskId = null;  // 🔥 清除当前任务ID
+              console.log("Task completed, flags reset. isCollecting:", isCollecting, "currentTaskId:", currentTaskId);
+              
+              document.getElementById("collectPhase").textContent =
+                task.status === 'completed' ? "已完成" :
+                task.status === 'failed' ? "失败" : "已取消";
+              appendLog(`🏁 后台采集任务结束: ${task.status}`, task.status === 'completed' ? "success" : "warning");
+
+              // 恢复并发采集按钮
+              const concurrentBtn = document.getElementById("startRangeConcurrentBtn");
+              if (concurrentBtn) {
+                concurrentBtn.disabled = false;
+                concurrentBtn.textContent = "🚀 开始采集";
+                concurrentBtn.classList.remove("btn-danger");
+                concurrentBtn.classList.add("btn-primary");
+              }
+              
+              // 恢复串行采集按钮
+              const serialBtn = document.getElementById("startSerialCollectBtn");
+              if (serialBtn) {
+                serialBtn.disabled = false;
+                serialBtn.textContent = "🐌 串行采集";
+                serialBtn.classList.remove("btn-danger");
+                serialBtn.classList.add("btn-info");
+              }
+              
+              // 🔥 刷新任务列表
+              refreshTasksList();
+            }
+          } catch (error) {
+            console.error("轮询任务状态失败:", error);
+          }
+        }, 2000); // 每2秒轮询一次
+      }
+
+      // ========== 🔥 新版后台采集（支持关闭网页后继续采集，自动恢复登录）==========
+      let bgCollectPollingInterval = null;
+      let currentBgTaskId = null;  // 🔥 保存当前任务ID，用于暂停/停止
+      
+      // 启动新版后台采集
+      async function startNewBackgroundCollect() {
+        const startDate = document.getElementById("rangeStartDate").value;
+        const endDate = document.getElementById("rangeEndDate")?.value || '';  // 🔥 新增结束日期
+        const filterByHandicap = document.getElementById("rangeFilterHandicap")?.checked ?? true;
+        const superMode = document.getElementById("superModeCheckbox")?.checked ?? true;  // 🔥 新增四合一模式
+        const skipCached = document.getElementById("skipCachedCheckbox")?.checked ?? true;  // 🔥 新增跳过已采集
+
+        if (!startDate) {
+          alert("请选择开始日期");
+          return;
+        }
+
+        const btn = document.getElementById("startBackgroundCollectBtn");
+        btn.disabled = true;
+        btn.textContent = "启动中...";
+
+        try {
+          const resp = await fetch("/api/background_collect/start", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              start_date: startDate,
+              end_date: endDate || undefined,  // 🔥 传递结束日期
+              filter_by_handicap: filterByHandicap,
+              skip_cached: skipCached,
+              super_mode: superMode,  // 🔥 传递四合一模式
+              workers: 2
+            })
+          });
+
+          const data = await resp.json();
+
+          if (data.success) {
+            const modeStr = superMode ? "四合一模式" : "标准模式";
+            appendLog(`🔄 后台采集任务已启动: ${data.task_id} (${modeStr})`, "success");
+            appendLog("💡 关闭网页后采集会继续运行，登录失效时自动恢复", "info");
+            
+            // 显示后台采集状态
+            showBackgroundCollectStatus(data.task);
+            
+            // 开始轮询进度
+            startBgCollectPolling(data.task_id);
+          } else {
+            appendLog(`❌ 启动失败: ${data.message}`, "error");
+            if (data.current_task) {
+              appendLog(`💡 已有任务在运行: ${data.current_task.task_id}`, "info");
+              showBackgroundCollectStatus(data.current_task);
+              startBgCollectPolling(data.current_task.task_id);
+            }
+          }
+        } catch (error) {
+          appendLog(`❌ 启动后台采集失败: ${error}`, "error");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "🚀 开始后台采集";
+        }
+      }
+      
+      // 显示后台采集状态
+      function showBackgroundCollectStatus(task) {
+        const statusDiv = document.getElementById("backgroundCollectStatus");
+        statusDiv.classList.remove("hidden");
+        
+        const progress = task.progress || {};
+        
+        // 🔥 格式化时间显示
+        function formatTime(seconds) {
+          if (!seconds || seconds <= 0) return "计算中...";
+          const mins = Math.floor(seconds / 60);
+          const secs = Math.floor(seconds % 60);
+          if (mins > 0) {
+            return `${mins}分${secs}秒`;
+          }
+          return `${secs}秒`;
+        }
+        
+        // 🔥 构建进度文本
+        let progressText = `${progress.percentage || 0}% (${progress.processed || 0}/${progress.total_matches || 0})`;
+        
+        // 添加当前比赛用时
+        if (progress.current_match_elapsed > 0) {
+          progressText += ` | 本场: ${formatTime(progress.current_match_elapsed)}`;
+        }
+        
+        // 添加平均用时
+        if (progress.avg_time_per_match > 0) {
+          progressText += ` | 平均: ${formatTime(progress.avg_time_per_match)}`;
+        }
+        
+        // 添加预估剩余时间
+        if (progress.estimated_remaining_seconds > 0) {
+          progressText += ` | 预计剩余: ${formatTime(progress.estimated_remaining_seconds)}`;
+        }
+        
+        document.getElementById("bgCollectProgress").textContent = progressText;
+        
+        let statusText = "";
+        switch(task.status) {
+          case "running": statusText = "运行中"; break;
+          case "paused": statusText = "已暂停"; break;
+          case "waiting_login": statusText = "等待登录恢复"; break;
+          case "completed": statusText = "已完成"; break;
+          case "failed": statusText = "失败"; break;
+          default: statusText = task.status;
+        }
+        
+        document.getElementById("bgCollectDetail").innerHTML = 
+          `状态: ${statusText} | 成功: ${progress.success || 0} | 失败: ${progress.failed || 0} | 跳过: ${progress.skipped || 0}` +
+          `<br>任务ID: <code>${task.task_id}</code>`;
+      }
+      
+      // 轮询后台采集进度
+      function startBgCollectPolling(taskId) {
+        currentBgTaskId = taskId;  // 🔥 保存当前任务ID
+        
+        if (bgCollectPollingInterval) {
+          clearInterval(bgCollectPollingInterval);
+        }
+        
+        bgCollectPollingInterval = setInterval(async () => {
+          try {
+            const resp = await fetch(`/api/background_collect/status?task_id=${taskId}`);
+            const data = await resp.json();
+            
+            if (!data.success) {
+              clearInterval(bgCollectPollingInterval);
+              return;
+            }
+            
+            const task = data.task;
+            showBackgroundCollectStatus(task);
+            
+            // 显示最新日志
+            if (task.recent_logs && task.recent_logs.length > 0) {
+              const lastLog = task.recent_logs[task.recent_logs.length - 1];
+              // 只显示新日志（避免重复）
+              if (!window._lastBgLogTime || lastLog.time > window._lastBgLogTime) {
+                window._lastBgLogTime = lastLog.time;
+                const logType = lastLog.level === 'ERROR' ? 'error' : 
+                               lastLog.level === 'WARNING' ? 'warning' : 'info';
+                appendLog(lastLog.message, logType);
+              }
+            }
+            
+            // 检查是否完成
+            if (['completed', 'failed', 'cancelled'].includes(task.status)) {
+              clearInterval(bgCollectPollingInterval);
+              bgCollectPollingInterval = null;
+              
+              const statusDiv = document.getElementById("backgroundCollectStatus");
+              statusDiv.classList.remove("alert-success");
+              statusDiv.classList.add(task.status === 'completed' ? "alert-success" : "alert-warning");
+              
+              appendLog(`🏁 后台采集任务结束: ${task.status}`, task.status === 'completed' ? "success" : "warning");
+            }
+          } catch (error) {
+            console.error("轮询后台采集状态失败:", error);
+          }
+        }, 3000); // 每3秒轮询一次
+      }
+      
+      // 暂停后台采集
+      async function pauseBackgroundCollect() {
+        try {
+          // 🔥 传递当前任务ID，而不是依赖服务器端的_current_task_id
+          const resp = await fetch("/api/background_collect/pause", { 
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ task_id: currentBgTaskId })
+          });
+          const data = await resp.json();
+          
+          if (data.success) {
+            appendLog("⏸️ 后台采集已暂停", "warning");
+          } else {
+            appendLog(`❌ 暂停失败: ${data.message}`, "error");
+          }
+        } catch (error) {
+          appendLog(`❌ 暂停失败: ${error}`, "error");
+        }
+      }
+      
+      // 停止后台采集
+      async function stopBackgroundCollect() {
+        if (!confirm("确定要停止后台采集吗？")) return;
+        
+        try {
+          // 🔥 传递当前任务ID，而不是依赖服务器端的_current_task_id
+          const resp = await fetch("/api/background_collect/stop", { 
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ task_id: currentBgTaskId })
+          });
+          const data = await resp.json();
+          
+          if (data.success) {
+            appendLog("⏹️ 后台采集已停止", "warning");
+            document.getElementById("backgroundCollectStatus").classList.add("hidden");
+            currentBgTaskId = null;  // 🔥 清除当前任务ID
+            if (bgCollectPollingInterval) {
+              clearInterval(bgCollectPollingInterval);
+              bgCollectPollingInterval = null;
+            }
+          } else {
+            appendLog(`❌ 停止失败: ${data.message}`, "error");
+          }
+        } catch (error) {
+          appendLog(`❌ 停止失败: ${error}`, "error");
+        }
+      }
+      
+      // 绑定后台采集按钮事件
+      document.getElementById("startBackgroundCollectBtn")?.addEventListener("click", startNewBackgroundCollect);
+      document.getElementById("pauseBackgroundBtn")?.addEventListener("click", pauseBackgroundCollect);
+      document.getElementById("stopBackgroundBtn")?.addEventListener("click", stopBackgroundCollect);
+      
+      // 页面加载时检查是否有后台采集任务在运行
+      (async function checkBackgroundCollect() {
+        try {
+          const resp = await fetchWithTimeout("/api/background_collect/status", {}, 5000);
+          const data = await resp.json();
+          if (data.success && data.has_running_task && data.current_task) {
+            appendLog(`💡 发现运行中的后台采集任务: ${data.current_task.task_id}`, "info");
+            showBackgroundCollectStatus(data.current_task);
+            startBgCollectPolling(data.current_task.task_id);
+          }
+        } catch (e) {
+          console.log("检查后台采集任务失败:", e);
+        }
+      })();
+
+      // 停止任务
+      async function stopTask(taskId) {
+        if (!confirm("确定要停止该任务吗？")) return;
+
+        try {
+          const resp = await fetch(`/api/tasks/${taskId}/stop`, { method: "POST" });
+          const data = await resp.json();
+
+          if (data.success) {
+            appendLog(`⏹️ 任务 ${taskId} 已发送停止信号`, "warning");
+            refreshTasks();
+          } else {
+            appendLog(`❌ 停止任务失败: ${data.message}`, "error");
+          }
+        } catch (error) {
+          appendLog(`❌ 停止任务失败: ${error}`, "error");
+        }
+      }
+
+      // 查看任务日志
+      async function viewTaskLogs(taskId) {
+        try {
+          const resp = await fetch(`/api/tasks/${taskId}/logs?limit=50`);
+          const data = await resp.json();
+
+          if (data.success) {
+            let logHtml = '<div style="max-height:300px; overflow-y:auto; font-size:12px; font-family:monospace; background:#1e1e1e; color:#d4d4d4; padding:10px; border-radius:4px;">';
+            for (const log of data.logs) {
+              const color = log.level === 'ERROR' ? '#F44336' : log.level === 'WARNING' ? '#FF9800' : '#4CAF50';
+              logHtml += `<div style="margin-bottom:4px;"><span style="color:${color};">[${log.level}]</span> ${log.message}</div>`;
+            }
+            logHtml += '</div>';
+
+            document.getElementById("tasksList").innerHTML = `
+              <div style="margin-bottom:10px;">
+                <button class="btn btn-outline btn-sm" onclick="refreshTasks()">← 返回任务列表</button>
+                <strong style="margin-left:10px;">任务日志: ${taskId}</strong>
+              </div>
+              ${logHtml}
+            `;
+          }
+        } catch (error) {
+          alert(`加载日志失败: ${error}`);
+        }
+      }
+
+      // 绑定按钮事件 - 并发采集使用后台任务模式
+      document.getElementById("viewTasksBtn")?.addEventListener("click", openTasksModal);
+      
+      // 🔥 绑定查询比赛按钮
+      document.getElementById("queryFinishedBtn")?.addEventListener("click", async function() {
+        const startDate = document.getElementById("rangeStartDate").value;
+        const endDate = document.getElementById("rangeEndDate")?.value;
+        const filterByHandicap = document.getElementById("rangeFilterHandicap")?.checked ?? true;
+        
+        if (!startDate) {
+          alert("请选择开始日期");
+          return;
+        }
+        
+        const btn = this;
+        btn.disabled = true;
+        btn.textContent = "🔄 查询中...";
+        
+        appendLog(`🔍 查询比赛: ${startDate} 至 ${endDate || '昨天'}`, "info");
+        
+        try {
+          const url = `/api/matches/finished?start_date=${startDate}${endDate ? `&end_date=${endDate}` : ''}${filterByHandicap ? '&filter_by_handicap=1' : ''}`;
+          const resp = await fetch(url);
+          const data = await resp.json();
+          
+          if (data.success && data.matches) {
+            appendLog(`✅ 查询成功: 找到 ${data.matches.length} 场比赛`, "success");
+            
+            // 显示比赛列表
+            const listContainer = document.getElementById("finishedMatchList");
+            if (data.matches.length === 0) {
+              listContainer.innerHTML = '<div class="empty-state"><div class="icon">📅</div><p>未找到符合条件的比赛</p></div>';
+            } else {
+              let html = '<div style="display: grid; gap: 12px;">';
+              for (const match of data.matches) {
+                html += `
+                  <div style="border: 1px solid #e0e0e0; border-radius: 8px; padding: 12px; background: #fafafa;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                      <div>
+                        <div style="font-size: 14px; color: #666; margin-bottom: 4px;">${match.league || ''} | ${match.kickoff || ''}</div>
+                        <div style="font-size: 16px; font-weight: 600;">${match.home || ''} vs ${match.away || ''}</div>
+                        <div style="font-size: 14px; color: #999; margin-top: 4px;">比分: ${match.score || '未知'}</div>
+                      </div>
+                      <div style="display: flex; gap: 8px;">
+                        <span style="padding: 4px 8px; background: ${match.has_handicap ? '#4CAF50' : '#ccc'}; color: white; border-radius: 4px; font-size: 12px;">
+                          ${match.has_handicap ? '有盘口' : '无盘口'}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                `;
+              }
+              html += '</div>';
+              listContainer.innerHTML = html;
+            }
+          } else {
+            appendLog(`❌ 查询失败: ${data.message || '未知错误'}`, "error");
+          }
+        } catch (error) {
+          appendLog(`❌ 查询失败: ${error.message}`, "error");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "🔍 查询比赛";
+        }
+      });
+
+      // 页面加载时检查是否有运行中的任务
+      (async function checkRunningTasks() {
+        try {
+          const controller = new AbortController();
+          const timeoutId = setTimeout(() => controller.abort(), 5000);
+          
+          const resp = await fetch("/api/tasks/running", {
+            signal: controller.signal
+          });
+          clearTimeout(timeoutId);
+          
+          const data = await resp.json();
+          if (data.success && data.count > 0) {
+            const task = data.tasks[0];
+            appendLog(`💡 发现运行中的后台任务: ${task.task_id}`, "info");
+            currentTaskId = task.task_id;
+            document.getElementById("collectProgressCard").classList.remove("hidden");
+            document.getElementById("collectPhase").textContent = "后台运行";
+            
+            // 更新按钮状态
+            const btn = document.getElementById("startRangeConcurrentBtn");
+            if (btn) {
+              btn.textContent = "⏹️ 停止采集";
+              btn.classList.remove("btn-primary");
+              btn.classList.add("btn-danger");
+              btn.onclick = async () => {
+                if (confirm("确定要停止当前采集任务吗？")) {
+                  try {
+                    const stopResp = await fetch(`/api/tasks/${currentTaskId}/stop`, {
+                      method: "POST"
+                    });
+                    const stopData = await stopResp.json();
+                    if (stopData.success) {
+                      appendLog("⏹️ 采集任务已停止", "warning");
+                    }
+                  } catch (error) {
+                    appendLog(`停止任务失败: ${error}`, "error");
+                  }
+                }
+              };
+            }
+            
+            startTaskPolling(task.task_id);
+          }
+        } catch (e) {
+          console.log("检查运行中任务失败:", e);
+        }
+      })();
+    </script>
+  </body>
+</html>
